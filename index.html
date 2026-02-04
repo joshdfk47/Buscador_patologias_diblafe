@@ -28,6 +28,7 @@
       --ok:#16a34a;     /* verde (SI) */
       --warn:#f59e0b;   /* amarillo (INFORME) */
       --na:#94a3b8;     /* gris (no existe) */
+      --danger:#ef4444;
 
       /* Tamaño base (subido) */
       --baseFont: 18px;
@@ -214,6 +215,21 @@
       white-space:nowrap;
     }
     .btn2:active{ transform: translateY(1px); }
+
+    /* Botón secundario "peligro" */
+    .btnDanger{
+      border: 1px solid rgba(239,68,68,.35);
+      background: rgba(239,68,68,.10);
+      color: #7f1d1d;
+      font-weight: 950;
+      padding: 12px 14px;
+      border-radius: 12px;
+      cursor:pointer;
+      box-shadow: 0 10px 18px rgba(239,68,68,.10);
+      font-size: 15px;
+      white-space:nowrap;
+    }
+    .btnDanger:active{ transform: translateY(1px); }
 
     .hint{
       margin-top: 10px;
@@ -612,6 +628,154 @@
         justify-content:flex-start;
       }
     }
+
+    /* =========================
+       MODAL ELIMINAR COMPAÑÍAS (POPUP)
+       ========================= */
+    .smallDialog{
+      max-width: 760px;
+    }
+    .companiesBox{
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow:hidden;
+      background:#fff;
+    }
+    .companiesTools{
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #ffffff 0%, var(--soft) 100%);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .companiesTools .left{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .companiesTools .right{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .companiesList{
+      max-height: 52vh;
+      overflow:auto;
+      padding: 10px 12px;
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 10px;
+    }
+    @media (max-width: 520px){
+      .companiesList{ grid-template-columns: 1fr; }
+    }
+    .companyItem{
+      border: 1px solid rgba(226,232,240,.9);
+      border-radius: 12px;
+      padding: 10px 10px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      background:#fff;
+      min-width:0;
+    }
+    .companyItem:hover{
+      border-color: rgba(214,162,58,.55);
+      box-shadow: 0 10px 18px rgba(11,43,76,.08);
+    }
+    .companyItem input{
+      width:18px;
+      height:18px;
+      flex: 0 0 auto;
+    }
+    .companyName{
+      font-weight: 950;
+      color: var(--text);
+      font-size: 14px;
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      flex: 1 1 auto;
+    }
+    .deleteHint{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(239,68,68,.35);
+      background: rgba(239,68,68,.08);
+      color: #7f1d1d;
+      font-weight: 900;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    /* =========================
+   MULTISELECT COMPAÑÍAS (ADMIN)
+   ========================= */
+.multiCompanySelect{
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #dbe3f2;
+  background: #fff;
+  font-weight: 800;
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* Altura cómoda para ver varias compañías (sin romper en desktop) */
+
+
+/* Texto ayuda */
+.hintSmall{
+  grid-column: 1 / -1;
+  font-size: 12.5px;
+  color: #475569;
+  margin-top: -6px;
+}
+/* =========================
+   ADMIN: SELECT COMPAÑÍA MULTI
+   Mantener apariencia “desplegable” (sin caja grande)
+   ========================= */
+/* =========================
+   ADMIN: SELECT COMPAÑÍA MULTI
+   Mantener apariencia “desplegable” y permitir scroll
+   ========================= */
+#adminCompany[multiple]{
+  height: 44px;              /* igual que tus inputs/select normales */
+  min-height: 44px;
+  padding: 10px 12px;
+  padding-right: 28px;       /* espacio para la barra de scroll */
+  border-radius: 12px;
+  border: 1px solid #dbe3f2;
+  background: #fff;
+  font-weight: 800;
+  outline: none;
+  box-sizing: border-box;
+
+  /* ACTUALIZADO: permitir scroll para ver todas las compañías */
+  overflow-y: auto;          /* muestra scroll */
+  overflow-x: hidden;        /* evita scroll horizontal feo */
+  scrollbar-gutter: stable;  /* evita “saltos” por scrollbar (si el navegador lo soporta) */
+}
+
+/* En móvil: no romper layout */
+@media (max-width: 520px){
+  #adminCompany[multiple]{
+    height: 44px;            /* se mantiene compacto */
+  }
+}
+
+
+/* En móvil: que el multiselect no se “coma” la pantalla */
+
+
   </style>
 </head>
 
@@ -709,29 +873,43 @@
             <input id="adminNewCompany" type="text" placeholder="Ej: SANTA LUCIA" autocomplete="off" />
           </div>
 
-          <div style="display:flex; gap:10px; justify-content:flex-end; align-items:end; flex-wrap:wrap;">
-            <button class="btn" id="btnAddCompany" type="button">Añadir compañía</button>
+          <!-- BOTONES: AÑADIR + ELIMINAR (POPUP) -->
+          <!-- BOTONES: AÑADIR + ELIMINAR (POPUP) -->
+          <div style="
+            display:flex;
+            flex-direction:row;
+            align-items:center;
+            justify-content:flex-end;
+            gap:12px;
+            flex-wrap:nowrap;
+            width:100%;
+          ">
+            <button class="btn" id="btnAddCompany" type="button" style="white-space:nowrap;">
+              Añadir compañía
+            </button>
+
+            <button class="btnDanger" id="btnOpenDeleteCompanies" type="button" style="white-space:nowrap;">
+              Eliminar compañía
+            </button>
           </div>
 
           <div style="grid-column: 1 / -1; height: 1px; background: rgba(226,232,240,.9); margin: 4px 0 8px;"></div>
-
-          <!-- SELECT COMPAÑÍA + ELIMINAR COMPAÑÍA -->
-          <div>
-            <label for="adminCompany">Compañía</label>
-            <select id="adminCompany"></select>
-          </div>
-
-          <div style="display:flex; gap:10px; justify-content:flex-end; align-items:end; flex-wrap:wrap;">
-            <button class="btn2" id="btnDeleteCompany" type="button">Eliminar compañía</button>
-          </div>
-
-          <div style="grid-column: 1 / -1; height: 1px; background: rgba(226,232,240,.9); margin: 4px 0 8px;"></div>
-
           <!-- CRUD PATOLOGÍAS -->
           <div>
             <label for="adminPatologia">Patología</label>
             <input id="adminPatologia" type="text" placeholder="Ej: Cáncer tratado hace menos de 5 años" autocomplete="off" />
           </div>
+          <!-- SELECT COMPAÑÍA (SOLO PARA CRUD PATOLOGÍAS) -->
+          
+          <div>
+            <label for="adminCompany">Compañía</label>
+            <select id="adminCompany" multiple></select>
+          </div>
+
+
+
+
+          
 
           <div>
             <label for="adminContratable">Contratable</label>
@@ -742,7 +920,7 @@
           </div>
 
           <div class="adminActionsRow">
-            <button class="btn" id="btnAdminSave" type="button">Guardar</button>
+            <button class="btn" id="btnAdminSave" type="button">Añadir patología</button>
             <button class="btn2" id="btnAdminClearForm" type="button">Limpiar</button>
             <button class="btn2" id="btnAdminLogout" type="button">Salir</button>
           </div>
@@ -763,17 +941,56 @@
     </div>
   </div>
 
+  <!-- =========================
+       POPUP ELIMINAR COMPAÑÍAS
+       ========================= -->
+  <div class="modal" id="deleteCompaniesModal" aria-hidden="true">
+    <div class="modalBackdrop" id="deleteCompaniesBackdrop"></div>
+
+    <div class="modalDialog smallDialog" role="dialog" aria-modal="true" aria-labelledby="deleteCompaniesTitle">
+      <div class="modalHeader">
+        <div>
+          <div class="modalTitle" id="deleteCompaniesTitle">Eliminar compañías</div>
+          <div class="modalSub">Selecciona una o varias compañías y elimina. (Persistente)</div>
+        </div>
+        <button class="iconBtn" id="btnCloseDeleteCompanies" type="button" aria-label="Cerrar">✕</button>
+      </div>
+
+      <div class="modalBody">
+        <div class="companiesBox">
+          <div class="companiesTools">
+            <div class="left">
+              <strong style="color:var(--brand); font-size:14px;">Compañías disponibles</strong>
+            </div>
+            <div class="right" style="min-width:min(420px,100%);">
+              <input id="deleteCompaniesFilter" type="text" placeholder="Filtrar compañías..." autocomplete="off" />
+            </div>
+          </div>
+
+          <div class="companiesList" id="deleteCompaniesList"></div>
+        </div>
+
+        <div class="deleteHint">
+          ⚠️ Al eliminar una compañía se oculta del buscador y del admin, y se borran sus overrides (si existían).
+          Puedes revertirlo volviendo a añadir la compañía con el mismo nombre.
+        </div>
+
+        <div class="adminActionsRow" style="margin-top: 12px;">
+          <button class="btnDanger" id="btnConfirmDeleteCompanies" type="button">Eliminar seleccionadas</button>
+          <button class="btn2" id="btnCancelDeleteCompanies" type="button">Cancelar</button>
+        </div>
+
+        <div class="adminHint" id="deleteCompaniesHint" style="display:none; margin-top:10px;"></div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // =========================================================
     // 1) PEGA AQUÍ TU DICCIONARIO COMPLETO (BASE)
     // =========================================================
-    // FORMATO:
-    // const PATHOLOGIES_BASE = {
-    //   "HELVETIA": [{ "patologia":"...", "contratable":"SI|INFORME MEDICO" }, ...],
-    //   "EUROPEA":  [...],
-    //   ...
     const PATHOLOGIES_BASE = {
-              "HELVETIA": [
+      "HELVETIA": [
         { "patologia": "Infarto de miocardio", "contratable": "INFORME MEDICO" },
         { "patologia": "Angina de pecho", "contratable": "INFORME MEDICO" },
         { "patologia": "Cardiopatía isquémica", "contratable": "INFORME MEDICO" },
@@ -835,10 +1052,14 @@
         { "patologia": "Esquizofrenia", "contratable": "SI" },
         { "patologia": "Obesidad", "contratable": "SI" },
         { "patologia": "Fibromialgia", "contratable": "SI" },
-        { "patologia": "Epilepsia ", "contratable": "SI" }
-        ],
+        { "patologia": "Epilepsia ", "contratable": "SI" },
+        { "patologia": "Diabetes", "contratable": "SI" },
+        { "patologia": "Epilepsia", "contratable": "SI" },
+        { "patologia": "Fibromialgia", "contratable": "SI" },
+        { "patologia": "Obesidad", "contratable": "SI" }
+      ],
 
-        "EUROPEA": [
+      "EUROPEA": [
         { "patologia": "Infarto de miocardio", "contratable": "INFORME MEDICO" },
         { "patologia": "Angina de pecho", "contratable": "INFORME MEDICO" },
         { "patologia": "Cardiopatía isquémica", "contratable": "INFORME MEDICO" },
@@ -852,7 +1073,7 @@
         { "patologia": "Ictus / ACV / Derrame cerebral", "contratable": "INFORME MEDICO" },
         { "patologia": "AIT (mini-ictus)", "contratable": "INFORME MEDICO" },
         { "patologia": "Hipertensión arterial diagnosticada", "contratable": "INFORME MEDICO" },
-        { "patologia": "Diabetes tipo 2", "contratable": "INFORME MEDICO" },
+        { "patologia": "Diabetes", "contratable": "INFORME MEDICO" },
         { "patologia": "Asma grave", "contratable": "INFORME MEDICO" },
         { "patologia": "Insuficiencia renal crónica", "contratable": "INFORME MEDICO" },
         { "patologia": "Hepatitis crónica activa", "contratable": "INFORME MEDICO" },
@@ -889,9 +1110,9 @@
         { "patologia": "Infecciones leves o puntuales", "contratable": "SI" },
         { "patologia": "Analíticas rutinarias", "contratable": "SI" },
         { "patologia": "Diabetes", "contratable": "SI" }
-        ],
+      ],
 
-        "OCASO": [
+      "OCASO": [
         { "patologia": "Enfermedad crónica con tratamiento y seguimiento por especialista", "contratable": "INFORME MEDICO" },
         { "patologia": "Cardiopatías crónicas (infarto, insuficiencia cardíaca, arritmias)", "contratable": "INFORME MEDICO" },
         { "patologia": "Enfermedad pulmonar crónica (EPOC, fibrosis pulmonar)", "contratable": "INFORME MEDICO" },
@@ -911,10 +1132,9 @@
         { "patologia": "Asma leve controlada", "contratable": "SI" },
         { "patologia": "Incapacidades motrices", "contratable": "SI" },
         { "patologia": "Enfermedades leves sin seguimiento especializado", "contratable": "SI" }
-        ],
+      ],
 
-
-        "AURA": [
+      "AURA": [
         { "patologia": "Cáncer ", "contratable": "INFORME MEDICO" },
         { "patologia": "Trasplante de órganos", "contratable": "INFORME MEDICO" },
         { "patologia": "Trasplante de médula ósea", "contratable": "INFORME MEDICO" },
@@ -951,14 +1171,12 @@
         { "patologia": "Hipertensión sin tratamiento", "contratable": "SI" },
         { "patologia": "Colesterol sin tratamiento", "contratable": "SI" },
         { "patologia": "Tratamientos puntuales", "contratable": "SI" }
-        ]
+      ]
     };
-
 
     // =========================================================
     // 2) STORAGE (Persistencia admin)
     // =========================================================
-    // ACTUALIZADO: v4 para soportar "deletedCompanies" y migración desde v3
     const STORAGE_KEY_DATA_V3 = "diblafe_pathologies_overrides_v3";
     const STORAGE_KEY_DATA_V4 = "diblafe_pathologies_overrides_v4";
     const STORAGE_KEY_ADMIN = "diblafe_admin_logged_v4";
@@ -1012,10 +1230,9 @@
 
     // =========================================================
     // OVERRIDES v4: { data: {COMPANY:[...]}, deleted: [COMPANY,...] }
-    // Migración desde v3 (formato antiguo: {COMPANY:[...], COMPANY2:[...]} )
+    // Migración desde v3
     // =========================================================
     function loadOverridesV4(){
-      // 1) intenta v4
       try{
         const raw4 = localStorage.getItem(STORAGE_KEY_DATA_V4);
         if (raw4){
@@ -1028,13 +1245,11 @@
         }
       }catch(e){}
 
-      // 2) migra v3 si existe
       try{
         const raw3 = localStorage.getItem(STORAGE_KEY_DATA_V3);
         if (raw3){
           const parsed3 = JSON.parse(raw3);
           if (parsed3 && typeof parsed3 === "object"){
-            // si parece v4 ya, lo aceptamos
             if (parsed3.data || parsed3.deleted){
               const data2 = (parsed3.data && typeof parsed3.data === "object") ? parsed3.data : {};
               const deleted2 = Array.isArray(parsed3.deleted) ? parsed3.deleted : [];
@@ -1042,8 +1257,6 @@
               saveOverridesV4(migrated);
               return migrated;
             }
-
-            // si es v3 plano: { COMPANY:[...] }
             const migrated = { data: parsed3, deleted: [] };
             saveOverridesV4(migrated);
             return migrated;
@@ -1060,9 +1273,7 @@
         if (!clean.data || typeof clean.data !== "object") clean.data = {};
         if (!Array.isArray(clean.deleted)) clean.deleted = [];
         localStorage.setItem(STORAGE_KEY_DATA_V4, JSON.stringify(clean));
-      }catch(e){
-        // sin acciones extra
-      }
+      }catch(e){}
     }
 
     function canonicalizeCompanies(obj){
@@ -1105,18 +1316,15 @@
 
       const out = deepClone(baseRaw);
 
-      // aplica overrides (sustitución total por compañía)
       Object.keys(ovData).forEach(function(company){
         if (!Array.isArray(ovData[company])) return;
         out[company] = dedupeCompanyList(ovData[company]);
       });
 
-      // dedupe final
       Object.keys(out).forEach(function(company){
         out[company] = dedupeCompanyList(out[company]);
       });
 
-      // aplica eliminadas (se quitan aunque existan en base)
       deleted.forEach(function(c){
         if (out[c]) delete out[c];
       });
@@ -1162,7 +1370,6 @@
 
     function buildIndex(){
       buildCompanies();
-      // limpia index previo
       Object.keys(INDEX).forEach(function(k){ delete INDEX[k]; });
 
       COMPANIES.forEach(function(c){
@@ -1299,7 +1506,6 @@
     const btnAddCompany = document.getElementById("btnAddCompany");
 
     const adminCompany = document.getElementById("adminCompany");
-    const btnDeleteCompany = document.getElementById("btnDeleteCompany");
 
     const adminPatologia = document.getElementById("adminPatologia");
     const adminContratable = document.getElementById("adminContratable");
@@ -1311,6 +1517,19 @@
     const adminList = document.getElementById("adminList");
 
     let adminEditingKey = null;
+
+    // =========================
+    // POPUP ELIMINAR COMPAÑÍAS
+    // =========================
+    const btnOpenDeleteCompanies = document.getElementById("btnOpenDeleteCompanies");
+    const deleteCompaniesModal = document.getElementById("deleteCompaniesModal");
+    const deleteCompaniesBackdrop = document.getElementById("deleteCompaniesBackdrop");
+    const btnCloseDeleteCompanies = document.getElementById("btnCloseDeleteCompanies");
+    const btnCancelDeleteCompanies = document.getElementById("btnCancelDeleteCompanies");
+    const btnConfirmDeleteCompanies = document.getElementById("btnConfirmDeleteCompanies");
+    const deleteCompaniesList = document.getElementById("deleteCompaniesList");
+    const deleteCompaniesFilter = document.getElementById("deleteCompaniesFilter");
+    const deleteCompaniesHint = document.getElementById("deleteCompaniesHint");
 
     function isAdminLogged(){
       try{
@@ -1365,17 +1584,30 @@
 
     function fillCompanySelect(){
       adminCompany.innerHTML = "";
-      COMPANIES.forEach(function(c){
+
+      (COMPANIES || []).forEach(function(c){
         const opt = document.createElement("option");
         opt.value = c;
         opt.textContent = c;
         adminCompany.appendChild(opt);
       });
 
-      if ((!adminCompany.value || !PATHOLOGIES[adminCompany.value]) && COMPANIES.length){
-        adminCompany.value = COMPANIES[0];
+      // Selección por defecto: primera compañía disponible
+      if (COMPANIES && COMPANIES.length){
+        // Si no hay ninguna seleccionada, marcamos la primera.
+        const hasAnySelected = Array.from(adminCompany.options || []).some(function(o){ return o.selected; });
+
+        if (!hasAnySelected){
+          adminCompany.options[0].selected = true;
+        }
+
+        // Aseguramos .value consistente para renderAdminList()
+        if (!adminCompany.value){
+          adminCompany.value = COMPANIES[0];
+        }
       }
     }
+
 
     function resetAdminForm(){
       adminEditingKey = null;
@@ -1393,6 +1625,12 @@
     function showLoginHint(text){
       adminLoginHint.textContent = text;
       adminLoginHint.style.display = "block";
+    }
+
+    function showDeleteCompaniesHint(text, kind){
+      deleteCompaniesHint.textContent = text;
+      deleteCompaniesHint.className = "adminHint " + (kind === "ok" ? "ok" : (kind === "bad" ? "bad" : ""));
+      deleteCompaniesHint.style.display = "block";
     }
 
     function getCompanyList(company){
@@ -1414,7 +1652,6 @@
       if (!Array.isArray(ov.deleted)) ov.deleted = [];
 
       ov.data[c] = deepClone(getCompanyList(c));
-      // si estaba eliminada, la reactivamos
       ov.deleted = ov.deleted.filter(function(x){ return normalizeCompanyKey(x) !== c; });
 
       saveOverridesV4(ov);
@@ -1436,19 +1673,16 @@
         return false;
       }
 
-      // si ya existe visible, no duplicar
       if (PATHOLOGIES[c]){
         showCrudHint("La compañía ya existe: " + c, "bad");
         return false;
       }
 
-      // reactivamos si estaba en deleted
       const ov = loadOverridesV4();
       if (!ov.data || typeof ov.data !== "object") ov.data = {};
       if (!Array.isArray(ov.deleted)) ov.deleted = [];
       ov.deleted = ov.deleted.filter(function(x){ return normalizeCompanyKey(x) !== c; });
 
-      // creamos vacía en overrides.data para persistir
       ov.data[c] = Array.isArray(ov.data[c]) ? ov.data[c] : [];
       saveOverridesV4(ov);
 
@@ -1463,35 +1697,42 @@
       return true;
     }
 
+    // --- eliminación (single) ---
     function deleteCompany(company){
       const c = normalizeCompanyKey(company);
-      if (!c){
-        showCrudHint("Compañía inválida.", "bad");
-        return false;
-      }
-      if (!PATHOLOGIES[c]){
-        showCrudHint("Esa compañía ya no existe en la vista.", "bad");
-        return false;
-      }
-
-      const ok = window.confirm("¿Eliminar la compañía '" + c + "' y TODAS sus patologías?\n\nEsto se puede revertir volviendo a añadir la compañía.");
-      if (!ok) return false;
+      if (!c) return false;
 
       const ov = loadOverridesV4();
       if (!ov.data || typeof ov.data !== "object") ov.data = {};
       if (!Array.isArray(ov.deleted)) ov.deleted = [];
 
-      // marcamos como eliminada (oculta incluso si está en BASE)
       if (ov.deleted.map(function(x){ return normalizeCompanyKey(x); }).indexOf(c) === -1){
         ov.deleted.push(c);
       }
-      // y eliminamos su override data si existía
       if (ov.data[c]) delete ov.data[c];
 
       saveOverridesV4(ov);
 
       mergeBaseAndOverrides();
       buildIndex();
+      return true;
+    }
+
+    // --- eliminación (multi) ---
+    function deleteCompanies(companiesArr){
+      const list = (companiesArr || []).map(function(x){ return normalizeCompanyKey(x); }).filter(Boolean);
+      if (!list.length) return false;
+
+      const ok = window.confirm(
+        "¿Eliminar " + list.length + " compañía(s)?\n\n" +
+        list.join(", ") +
+        "\n\nEsto se puede revertir volviendo a añadir la compañía."
+      );
+      if (!ok) return false;
+
+      list.forEach(function(c){
+        deleteCompany(c);
+      });
 
       // refresca UI admin
       fillCompanySelect();
@@ -1499,12 +1740,11 @@
       adminFilter.value = "";
       renderAdminList();
 
-      // refresca resultados si había búsqueda
       if ((elQ.value || "").trim()){
         search();
       }
 
-      showCrudHint("Compañía eliminada: " + c, "ok");
+      showCrudHint("Compañías eliminadas: " + list.join(", "), "ok");
       return true;
     }
 
@@ -1519,7 +1759,6 @@
         return false;
       }
 
-      // si la compañía no existía (caso raro), la creamos
       if (!PATHOLOGIES[c]) setCompanyList(c, []);
 
       const list = deepClone(getCompanyList(c));
@@ -1650,21 +1889,153 @@
         adminList.appendChild(row);
       });
     }
+      function getSelectedAdminCompanies(){
+        try{
+          const sels = Array.from(adminCompany.selectedOptions || []).map(function(o){
+            return o.value;
+          }).filter(Boolean);
+
+          // fallback: si por algo no hay selectedOptions, usa value
+          if (!sels.length){
+            const v = adminCompany.value;
+            return v ? [v] : [];
+          }
+          return sels;
+        }catch(e){
+          const v = adminCompany.value;
+          return v ? [v] : [];
+        }
+      }
 
     function adminSave(){
-      const company = adminCompany.value;
       const pat = adminPatologia.value;
       const contr = adminContratable.value;
 
-      const ok = upsertPathology(company, pat, contr);
-      if (!ok) return;
+      // Si estás editando un registro (Edit), NO aplicamos multi:
+      // editas “la compañía actual” (adminCompany.value) para evitar cambios accidentales.
+      if (adminEditingKey){
+        const companyEdit = adminCompany.value;
 
+        const okEdit = upsertPathology(companyEdit, pat, contr);
+        if (!okEdit) return;
+
+        renderAdminList();
+        adminEditingKey = null;
+
+        if ((elQ.value || "").trim()){
+          search();
+        }
+        return;
+      }
+
+      // Modo “añadir”: aplica la patología a TODAS las compañías seleccionadas
+      const companies = getSelectedAdminCompanies();
+      if (!companies.length){
+        showCrudHint("Selecciona al menos una compañía.", "bad");
+        return;
+      }
+
+      let okCount = 0;
+      for (let i = 0; i < companies.length; i++){
+        const c = companies[i];
+        const ok = upsertPathology(c, pat, contr);
+        if (ok) okCount++;
+      }
+
+      // Refresca lista (muestra la lista de la primera seleccionada)
       renderAdminList();
       adminEditingKey = null;
 
-      // si hay búsqueda activa, refresca resultados
+      // Resumen final
+      showCrudHint("Guardado en " + okCount + " compañía(s).", "ok");
+
       if ((elQ.value || "").trim()){
         search();
+      }
+    }
+
+
+
+    // =========================
+    // POPUP eliminar compañías
+    // =========================
+    function openDeleteCompaniesPopup(){
+      deleteCompaniesHint.style.display = "none";
+      deleteCompaniesFilter.value = "";
+      renderDeleteCompaniesList();
+      deleteCompaniesModal.classList.add("open");
+      deleteCompaniesModal.setAttribute("aria-hidden","false");
+      deleteCompaniesFilter.focus();
+    }
+
+    function closeDeleteCompaniesPopup(){
+      deleteCompaniesModal.classList.remove("open");
+      deleteCompaniesModal.setAttribute("aria-hidden","true");
+      deleteCompaniesHint.style.display = "none";
+    }
+
+    function getVisibleCompanies(){
+      return (COMPANIES || []).slice();
+    }
+
+    function renderDeleteCompaniesList(){
+      const filter = normalizeText(deleteCompaniesFilter.value || "");
+      const companies = getVisibleCompanies()
+        .filter(function(c){
+          if (!filter) return true;
+          return normalizeText(c).includes(filter);
+        });
+
+      deleteCompaniesList.innerHTML = "";
+
+      if (!companies.length){
+        const empty = document.createElement("div");
+        empty.style.padding = "10px";
+        empty.style.color = "#475569";
+        empty.style.fontWeight = "900";
+        empty.textContent = "No hay compañías (o el filtro no coincide).";
+        deleteCompaniesList.appendChild(empty);
+        return;
+      }
+
+      companies.forEach(function(c){
+        const item = document.createElement("label");
+        item.className = "companyItem";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.value = c;
+
+        const name = document.createElement("div");
+        name.className = "companyName";
+        name.textContent = c;
+        name.title = c;
+
+        item.appendChild(cb);
+        item.appendChild(name);
+        deleteCompaniesList.appendChild(item);
+      });
+    }
+
+    function getSelectedCompaniesToDelete(){
+      const inputs = deleteCompaniesList.querySelectorAll('input[type="checkbox"]');
+      const selected = [];
+      inputs.forEach(function(i){
+        if (i.checked) selected.push(i.value);
+      });
+      return selected;
+    }
+
+    function confirmDeleteCompaniesFromPopup(){
+      const selected = getSelectedCompaniesToDelete();
+      if (!selected.length){
+        showDeleteCompaniesHint("Selecciona al menos una compañía para eliminar.", "bad");
+        return;
+      }
+
+      const ok = deleteCompanies(selected);
+      if (ok){
+        closeDeleteCompaniesPopup();
       }
     }
 
@@ -1700,7 +2071,6 @@
       }
     });
 
-    // búsqueda rápida (si quieres SOLO botón, comenta estas 3 líneas)
     elQ.addEventListener("input", debounce(function(){
       search();
     }, 180));
@@ -1714,10 +2084,13 @@
     adminBackdrop.addEventListener("click", function(){ closeAdmin(); });
 
     document.addEventListener("keydown", function(e){
-      if (!adminModal.classList.contains("open")) return;
-      if (e.key === "Escape"){
+      if (adminModal.classList.contains("open") && e.key === "Escape"){
         e.preventDefault();
         closeAdmin();
+      }
+      if (deleteCompaniesModal.classList.contains("open") && e.key === "Escape"){
+        e.preventDefault();
+        closeDeleteCompaniesPopup();
       }
     });
 
@@ -1785,17 +2158,29 @@
       }
     });
 
-    // Eliminar compañía
-    btnDeleteCompany.addEventListener("click", function(){
-      const c = adminCompany.value;
-      const ok = deleteCompany(c);
-      if (ok){
-        // intenta dejar una compañía seleccionada
-        if (COMPANIES.length){
-          adminCompany.value = COMPANIES[0];
-        }
-        renderAdminList();
-      }
+    // Abrir popup eliminar compañías
+    btnOpenDeleteCompanies.addEventListener("click", function(){
+      openDeleteCompaniesPopup();
+    });
+
+    // Popup: cerrar/cancelar
+    btnCloseDeleteCompanies.addEventListener("click", function(){
+      closeDeleteCompaniesPopup();
+    });
+    btnCancelDeleteCompanies.addEventListener("click", function(){
+      closeDeleteCompaniesPopup();
+    });
+    deleteCompaniesBackdrop.addEventListener("click", function(){
+      closeDeleteCompaniesPopup();
+    });
+
+    // Popup: filtrar y confirmar
+    deleteCompaniesFilter.addEventListener("input", debounce(function(){
+      renderDeleteCompaniesList();
+    }, 120));
+
+    btnConfirmDeleteCompanies.addEventListener("click", function(){
+      confirmDeleteCompaniesFromPopup();
     });
 
     // =========================================================
