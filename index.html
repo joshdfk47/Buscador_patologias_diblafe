@@ -1,0 +1,1807 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Buscador de Patologías (DIBLAFE)</title>
+
+  <style>
+    :root{
+      /* Paleta estilo Diblafe (azul marino + dorado) */
+      --bg:#ffffff;
+      --panel:#ffffff;
+      --text:#0b1220;
+      --muted:#475569;
+      --line:#e6e8ee;
+
+      --brand:#0b2b4c;      /* azul marino */
+      --brand2:#123b64;     /* azul marino + */
+      --gold:#d6a23a;       /* dorado */
+      --gold2:#b8862b;      /* dorado + */
+
+      --soft:#f6f8fb;
+
+      --shadow: 0 10px 30px rgba(11,43,76,.10);
+      --shadow2: 0 6px 18px rgba(11,43,76,.08);
+      --radius: 16px;
+
+      --ok:#16a34a;     /* verde (SI) */
+      --warn:#f59e0b;   /* amarillo (INFORME) */
+      --na:#94a3b8;     /* gris (no existe) */
+
+      /* Tamaño base (subido) */
+      --baseFont: 18px;
+
+      /* Safe areas iOS */
+      --safeTop: env(safe-area-inset-top, 0px);
+      --safeBottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    *{ box-sizing:border-box; }
+    html, body{
+      width:100%;
+      overflow-x:hidden;
+    }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: linear-gradient(180deg, #ffffff 0%, #ffffff 55%, var(--soft) 100%);
+      color:var(--text);
+      font-size: var(--baseFont);
+    }
+
+    /* TOPBAR */
+    .topbar{
+      background: linear-gradient(180deg, var(--brand) 0%, var(--brand2) 100%);
+      color:#fff;
+      box-shadow: 0 14px 34px rgba(11,43,76,.18);
+      padding-top: var(--safeTop);
+    }
+    .topbar .wrap{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:22px;
+      flex-wrap:nowrap;
+    }
+
+    .brandTitle{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width: 0;
+      flex: 1 1 auto;
+      padding-right: 18px;
+    }
+
+    .brandTitle h1{
+      margin:0;
+      font-size: 21px;
+      font-weight: 950;
+      letter-spacing:.2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .brandTitle p{
+      margin:0;
+      font-size: 13px;
+      opacity:.92;
+      line-height:1.35;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .topbarRight{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-left:auto;
+      flex-shrink:0;
+    }
+
+    .brandLogo{
+      height: 38px;
+      width: auto;
+      display:block;
+      object-fit:contain;
+      filter: drop-shadow(0 6px 14px rgba(0,0,0,.18));
+    }
+
+    /* BOTÓN ADMIN (TOPBAR) */
+    .btnAdminTop{
+      border: 1px solid rgba(255,255,255,.22);
+      background: rgba(255,255,255,.10);
+      color:#fff;
+      font-weight: 950;
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      box-shadow: 0 10px 18px rgba(0,0,0,.14);
+      font-size: 14px;
+      white-space:nowrap;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .btnAdminTop:hover{
+      background: rgba(255,255,255,.14);
+      border-color: rgba(255,255,255,.32);
+    }
+    .btnAdminTop:active{ transform: translateY(1px); }
+
+    /* LAYOUT PRINCIPAL */
+    .wrap{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 16px 16px 34px;
+    }
+
+    .card{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card-h{
+      padding: 14px 14px 10px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, #ffffff 0%, var(--soft) 100%);
+    }
+    .card-b{ padding: 14px; }
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items:end;
+    }
+    @media (max-width: 760px){
+      .controls{ grid-template-columns: 1fr; }
+    }
+
+    label{
+      font-size: 12.5px;
+      color: var(--muted);
+      display:block;
+      margin-bottom: 6px;
+      font-weight: 900;
+    }
+
+    input[type="text"], input[type="password"], select{
+      width:100%;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background:#fff;
+      outline:none;
+      color: var(--text);
+      box-shadow: 0 1px 0 rgba(11,43,76,.05);
+      font-size: 15px;
+    }
+    input[type="text"]:focus, input[type="password"]:focus, select:focus{
+      border-color: rgba(214,162,58,.60);
+      box-shadow: 0 0 0 4px rgba(214,162,58,.18);
+    }
+
+    .btn{
+      border: 1px solid rgba(11,43,76,.20);
+      background: linear-gradient(180deg, var(--gold) 0%, var(--gold2) 100%);
+      color: #1b1b1b;
+      font-weight: 950;
+      padding: 12px 14px;
+      border-radius: 12px;
+      cursor:pointer;
+      box-shadow: 0 12px 22px rgba(214,162,58,.22);
+      font-size: 15px;
+      white-space:nowrap;
+    }
+    .btn:active{ transform: translateY(1px); }
+
+    .btn2{
+      border: 1px solid var(--line);
+      background:#fff;
+      color: var(--brand);
+      font-weight: 950;
+      padding: 12px 14px;
+      border-radius: 12px;
+      cursor:pointer;
+      box-shadow: var(--shadow2);
+      font-size: 15px;
+      white-space:nowrap;
+    }
+    .btn2:active{ transform: translateY(1px); }
+
+    .hint{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border: 1px dashed rgba(148,163,184,.9);
+      border-radius: 14px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .legend{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .legend .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background:#fff;
+      font-size: 12.5px;
+      font-weight: 950;
+      color: var(--text);
+    }
+    .dot{
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      display:inline-block;
+    }
+    .dot.ok{ background: var(--ok); }
+    .dot.warn{ background: var(--warn); }
+    .dot.na{ background: var(--na); }
+
+    /* Resultados */
+    .results{
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+
+    .patCard{
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background:#fff;
+      padding: 12px;
+      box-shadow: 0 6px 16px rgba(11,43,76,.06);
+      overflow:hidden;
+    }
+    .patTitle{
+      margin:0;
+      font-weight: 950;
+      font-size: 15.5px;
+      line-height:1.25;
+      color: var(--brand);
+    }
+
+    /* RESPONSIVE FIX RESULTADOS */
+    .grid{
+      margin-top: 10px;
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    }
+    @media (max-width: 520px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .mini{
+      border:2px solid #E6ECF5;
+      border-radius: 12px;
+      padding: 10px;
+      background: #fff;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      min-width:0;
+      overflow:hidden;
+      flex-wrap:wrap;
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    .mini:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(10, 20, 40, .10);
+    }
+    .mini .c{
+      font-size: 13px;
+      font-weight: 950;
+      color: var(--text);
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      letter-spacing:.02em;
+      flex: 1 1 auto;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 2px solid var(--line);
+      background:#fff;
+      font-weight: 950;
+      font-size: 12.5px;
+      white-space: nowrap;
+      max-width: 100%;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      letter-spacing:.02em;
+      flex: 0 0 auto;
+    }
+    .pill.ok{
+      background: rgba(18, 140, 76, .16);
+      border-color: rgba(18, 140, 76, .55);
+      color: #0B5B2F;
+    }
+    .pill.warn{
+      background: rgba(245, 158, 11, .18);
+      border-color: rgba(245, 158, 11, .65);
+      color: #7A4A00;
+    }
+    .pill.na{
+      background: rgba(148, 163, 184, .22);
+      border-color: rgba(148, 163, 184, .65);
+      color: #334155;
+    }
+
+    /* Fondo por estado */
+    .mini.bg-ok{
+      background: rgba(16, 185, 129, .20);
+      border-color: rgba(16, 185, 129, .60);
+    }
+    .mini.bg-warn{
+      background: rgba(245, 158, 11, .22);
+      border-color: rgba(245, 158, 11, .70);
+    }
+    .mini.bg-na{
+      background: rgba(148, 163, 184, .18);
+      border-color: rgba(148, 163, 184, .60);
+    }
+
+    .empty{
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+      display:none;
+    }
+
+    /* RESPONSIVE TOPBAR */
+    @media (max-width: 760px){
+      .topbar .wrap{
+        padding: 12px 14px !important;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: flex-start;
+      }
+      .brandTitle{
+        flex: 1 1 100%;
+        padding-right: 0;
+      }
+      .topbarRight{
+        width:100%;
+        justify-content: space-between;
+      }
+      .brandLogo{
+        height: 34px;
+      }
+    }
+
+    /* =========================
+       MODAL ADMIN
+       ========================= */
+    .modal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      z-index: 9999;
+      padding-bottom: var(--safeBottom);
+    }
+    .modal.open{ display:block; }
+
+    .modalBackdrop{
+      position: absolute;
+      inset: 0;
+      background: rgba(2, 6, 23, .55);
+      backdrop-filter: blur(2px);
+    }
+
+    .modalDialog{
+      position: relative;
+      max-width: 980px;
+      width: calc(100% - 18px);
+      margin: 12px auto;
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid rgba(226,232,240,.9);
+      box-shadow: 0 24px 70px rgba(2, 6, 23, .35);
+      overflow: hidden;
+      max-height: calc(100dvh - 24px - var(--safeTop) - var(--safeBottom));
+      display:flex;
+      flex-direction:column;
+    }
+
+    .modalHeader{
+      padding: 14px 14px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #ffffff 0%, var(--soft) 100%);
+      flex: 0 0 auto;
+    }
+    .modalTitle{
+      font-weight: 950;
+      color: var(--brand);
+      font-size: 16px;
+      line-height: 1.2;
+    }
+    .modalSub{
+      margin-top: 4px;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 12.5px;
+    }
+
+    .iconBtn{
+      border: 1px solid var(--line);
+      background:#fff;
+      border-radius: 12px;
+      padding: 8px 10px;
+      cursor:pointer;
+      font-weight: 950;
+      color: var(--brand);
+      box-shadow: var(--shadow2);
+      flex: 0 0 auto;
+    }
+
+    .modalBody{
+      padding: 14px;
+      overflow:auto;
+      flex: 1 1 auto;
+    }
+
+    .adminGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 10px;
+      align-items:end;
+    }
+    @media (max-width: 900px){
+      .adminGrid{ grid-template-columns: 1fr; }
+    }
+
+    .adminHint{
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      font-size: 13px;
+      line-height:1.35;
+    }
+
+    .adminHint.ok{
+      border-color: rgba(16,185,129,.35);
+      background: rgba(16,185,129,.10);
+      color: #0B5B2F;
+      font-weight: 900;
+    }
+    .adminHint.bad{
+      border-color: rgba(239,68,68,.35);
+      background: rgba(239,68,68,.10);
+      color: #7f1d1d;
+      font-weight: 900;
+    }
+
+    .adminListWrap{
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow:hidden;
+      background:#fff;
+    }
+    .adminListHeader{
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #ffffff 0%, var(--soft) 100%);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .adminListTitle{
+      font-weight: 950;
+      color: var(--brand);
+      font-size: 14px;
+    }
+    .adminListTools{
+      display:flex;
+      gap: 8px;
+      align-items:center;
+      min-width: min(420px, 100%);
+      flex: 1 1 auto;
+    }
+    .adminList{
+      max-height: 52vh;
+      overflow:auto;
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(226,232,240,.8);
+      align-items:center;
+    }
+    .row:last-child{ border-bottom:none; }
+    .rowName{
+      font-weight: 900;
+      color: var(--text);
+      font-size: 13.5px;
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .rowRight{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+
+    .pill.adminFull{
+      max-width: none;
+      overflow: visible;
+      text-overflow: clip;
+      white-space: nowrap;
+    }
+
+    .tinyBtn{
+      border: 1px solid var(--line);
+      background:#fff;
+      color: var(--brand);
+      font-weight: 950;
+      padding: 8px 10px;
+      border-radius: 10px;
+      cursor:pointer;
+      box-shadow: 0 6px 12px rgba(11,43,76,.08);
+      font-size: 12.5px;
+      white-space:nowrap;
+    }
+    .tinyBtn.danger{
+      border-color: rgba(239,68,68,.35);
+      color: #7f1d1d;
+      background: rgba(239,68,68,.07);
+    }
+
+    .adminActionsRow{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      align-items:end;
+      flex-wrap:wrap;
+    }
+
+    @media (max-width: 520px){
+      .adminActionsRow{ justify-content:flex-start; }
+      .row{
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .rowRight{
+        justify-content:flex-start;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="wrap topbarWrap">
+      <div class="brandTitle">
+        <h1>Buscador de Patologías</h1>
+        <p>Buscas una patología y te muestra el estado en <strong>todas</strong> las compañías (comparativa).</p>
+      </div>
+
+      <div class="topbarRight">
+        <button class="btnAdminTop" id="btnOpenAdmin" type="button">Admin</button>
+        <!-- ACTUALIZA la ruta del logo si tu archivo se llama distinto -->
+        <img class="brandLogo" src="logo-diblafe.png" alt="Diblafe Seguros">
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENIDO -->
+  <div class="wrap">
+    <section class="card">
+      <div class="card-h">
+        <div class="controls">
+          <div>
+            <label for="q">Enfermedad / Patología</label>
+            <input id="q" type="text" placeholder="Escribe para buscar... (ej: hipertensión, cáncer, epoc)" autocomplete="off" />
+          </div>
+
+          <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+            <button class="btn" id="btnBuscar" type="button">Buscar</button>
+            <button class="btn2" id="btnLimpiar" type="button">Limpiar</button>
+          </div>
+        </div>
+
+        <div class="hint" id="hintBar">
+          <span>Escribe y pulsa <strong>Buscar</strong>. No se muestra ninguna lista hasta que busques.</span>
+          <span class="legend">
+            <span class="tag"><span class="dot ok"></span> SI (OK sin informe)</span>
+            <span class="tag"><span class="dot warn"></span> Requiere informe</span>
+            <span class="tag"><span class="dot na"></span> No existe</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="card-b">
+        <div id="results" class="results"></div>
+        <div id="noResults" class="empty">
+          <strong>Sin resultados.</strong><br>
+          Prueba con menos texto o una palabra más general.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- =========================
+       MODAL ADMIN (LOGIN + CRUD + COMPAÑÍAS)
+       ========================= -->
+  <div class="modal" id="adminModal" aria-hidden="true">
+    <div class="modalBackdrop" id="adminBackdrop"></div>
+
+    <div class="modalDialog" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
+      <div class="modalHeader">
+        <div>
+          <div class="modalTitle" id="adminTitle">Administración</div>
+          <div class="modalSub">Añadir / editar / eliminar patologías y compañías (persistente).</div>
+        </div>
+        <button class="iconBtn" id="btnCloseAdmin" type="button" aria-label="Cerrar">✕</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div class="modalBody" id="adminLoginBox">
+        <div class="adminGrid" style="grid-template-columns: 1fr;">
+          <div>
+            <label for="adminPass">Contraseña</label>
+            <input id="adminPass" type="password" placeholder="Introduce la contraseña de admin" autocomplete="off" />
+          </div>
+
+          <div class="adminActionsRow">
+            <button class="btn" id="btnAdminLogin" type="button">Entrar</button>
+            <button class="btn2" id="btnAdminCancel" type="button">Cancelar</button>
+          </div>
+
+          <div class="adminHint bad" id="adminLoginHint" style="display:none;"></div>
+        </div>
+      </div>
+
+      <!-- PANEL -->
+      <div class="modalBody" id="adminPanelBox" style="display:none;">
+        <div class="adminGrid">
+          <!-- NUEVA COMPAÑÍA -->
+          <div>
+            <label for="adminNewCompany">Nueva compañía</label>
+            <input id="adminNewCompany" type="text" placeholder="Ej: SANTA LUCIA" autocomplete="off" />
+          </div>
+
+          <div style="display:flex; gap:10px; justify-content:flex-end; align-items:end; flex-wrap:wrap;">
+            <button class="btn" id="btnAddCompany" type="button">Añadir compañía</button>
+          </div>
+
+          <div style="grid-column: 1 / -1; height: 1px; background: rgba(226,232,240,.9); margin: 4px 0 8px;"></div>
+
+          <!-- SELECT COMPAÑÍA + ELIMINAR COMPAÑÍA -->
+          <div>
+            <label for="adminCompany">Compañía</label>
+            <select id="adminCompany"></select>
+          </div>
+
+          <div style="display:flex; gap:10px; justify-content:flex-end; align-items:end; flex-wrap:wrap;">
+            <button class="btn2" id="btnDeleteCompany" type="button">Eliminar compañía</button>
+          </div>
+
+          <div style="grid-column: 1 / -1; height: 1px; background: rgba(226,232,240,.9); margin: 4px 0 8px;"></div>
+
+          <!-- CRUD PATOLOGÍAS -->
+          <div>
+            <label for="adminPatologia">Patología</label>
+            <input id="adminPatologia" type="text" placeholder="Ej: Cáncer tratado hace menos de 5 años" autocomplete="off" />
+          </div>
+
+          <div>
+            <label for="adminContratable">Contratable</label>
+            <select id="adminContratable">
+              <option value="SI">SI (OK sin informe)</option>
+              <option value="INFORME MEDICO">INFORME MEDICO</option>
+            </select>
+          </div>
+
+          <div class="adminActionsRow">
+            <button class="btn" id="btnAdminSave" type="button">Guardar</button>
+            <button class="btn2" id="btnAdminClearForm" type="button">Limpiar</button>
+            <button class="btn2" id="btnAdminLogout" type="button">Salir</button>
+          </div>
+
+          <div class="adminHint" id="adminCrudHint" style="display:none; grid-column: 1 / -1;"></div>
+
+          <div class="adminListWrap" style="grid-column: 1 / -1;">
+            <div class="adminListHeader">
+              <div class="adminListTitle">Patologías de la compañía seleccionada</div>
+              <div class="adminListTools">
+                <input id="adminFilter" type="text" placeholder="Filtrar dentro de la compañía..." autocomplete="off" />
+              </div>
+            </div>
+            <div class="adminList" id="adminList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================
+    // 1) PEGA AQUÍ TU DICCIONARIO COMPLETO (BASE)
+    // =========================================================
+    // FORMATO:
+    // const PATHOLOGIES_BASE = {
+    //   "HELVETIA": [{ "patologia":"...", "contratable":"SI|INFORME MEDICO" }, ...],
+    //   "EUROPEA":  [...],
+    //   ...
+    const PATHOLOGIES_BASE = {
+              "HELVETIA": [
+        { "patologia": "Infarto de miocardio", "contratable": "INFORME MEDICO" },
+        { "patologia": "Angina de pecho", "contratable": "INFORME MEDICO" },
+        { "patologia": "Cardiopatía isquémica", "contratable": "INFORME MEDICO" },
+        { "patologia": "Insuficiencia cardíaca", "contratable": "INFORME MEDICO" },
+        { "patologia": "Arritmias graves (fibrilación auricular, taquicardias)", "contratable": "INFORME MEDICO" },
+        { "patologia": "Cardiopatía congénita", "contratable": "INFORME MEDICO" },
+        { "patologia": "Miocardiopatía", "contratable": "INFORME MEDICO" },
+        { "patologia": "Colocación de stent ", "contratable": "INFORME MEDICO" },
+        { "patologia": "Bypass coronario", "contratable": "INFORME MEDICO" },
+        { "patologia": "Ictus", "contratable": "INFORME MEDICO" },
+        { "patologia": "Accidente cerebrovascular (ACV)", "contratable": "INFORME MEDICO" },
+        { "patologia": "Derrame cerebral", "contratable": "INFORME MEDICO" },
+        { "patologia": "Ataque isquémico transitorio (AIT / mini-ictus)", "contratable": "INFORME MEDICO" },
+        { "patologia": "Cáncer", "contratable": "INFORME MEDICO" },
+        { "patologia": "Tumores malignos", "contratable": "INFORME MEDICO" },
+        { "patologia": "Insuficiencia renal", "contratable": "INFORME MEDICO" },
+        { "patologia": "Diálisis", "contratable": "INFORME MEDICO" },
+        { "patologia": "Trasplante renal", "contratable": "INFORME MEDICO" },
+        { "patologia": "Enfermedad renal avanzada", "contratable": "INFORME MEDICO" },
+        { "patologia": "VIH", "contratable": "INFORME MEDICO" },
+        { "patologia": "SIDA", "contratable": "INFORME MEDICO" },
+        { "patologia": "Enfermedades oportunistas asociadas al VIH", "contratable": "INFORME MEDICO" },
+        { "patologia": "Alzhéimer", "contratable": "INFORME MEDICO" },
+        { "patologia": "Demencia senil", "contratable": "INFORME MEDICO" },
+        { "patologia": "Otras demencias neurodegenerativas", "contratable": "INFORME MEDICO" },
+        { "patologia": "EPOC", "contratable": "INFORME MEDICO" },
+        { "patologia": "Bronquitis crónica grave", "contratable": "INFORME MEDICO" },
+        { "patologia": "Enfisema pulmonar", "contratable": "INFORME MEDICO" },
+        { "patologia": "Fibrosis pulmonar", "contratable": "INFORME MEDICO" },
+        { "patologia": "Cirrosis ", "contratable": "INFORME MEDICO" },
+        { "patologia": "Cirrosis hepática", "contratable": "INFORME MEDICO" },
+        { "patologia": "Hepatopatía crónica grave", "contratable": "INFORME MEDICO" },
+        { "patologia": "Insuficiencia hepática", "contratable": "INFORME MEDICO" },
+
+        { "patologia": "Hipertensión", "contratable": "SI" },
+        { "patologia": "Palpitaciones ocasionales sin diagnóstico", "contratable": "SI" },
+        { "patologia": "Colesterol alto sin enfermedad cardíaca", "contratable": "SI" },
+        { "patologia": "Migrañas", "contratable": "SI" },
+        { "patologia": "Mareos", "contratable": "SI" },
+        { "patologia": "Vértigos sin ACV", "contratable": "SI" },
+        { "patologia": "Tumores benignos", "contratable": "SI" },
+        { "patologia": "Quistes ", "contratable": "SI" },
+        { "patologia": "Pólipos no malignos", "contratable": "SI" },
+        { "patologia": "Infecciones urinarias", "contratable": "SI" },
+        { "patologia": "Cálculos renales (piedras)", "contratable": "SI" },
+        { "patologia": "Alteraciones leves sin diagnóstico de insuficiencia renal", "contratable": "SI" },
+        { "patologia": "Otras infecciones de transmisión sexual", "contratable": "SI" },
+        { "patologia": "Pruebas negativas VIH", "contratable": "SI" },
+        { "patologia": "Pérdidas de memoria leves por edad", "contratable": "SI" },
+        { "patologia": "Estrés", "contratable": "SI" },
+        { "patologia": "Depresión", "contratable": "SI" },
+        { "patologia": "Ansiedad", "contratable": "SI" },
+        { "patologia": "Asma leve o controlado", "contratable": "SI" },
+        { "patologia": "Resfriados frecuentes", "contratable": "SI" },
+        { "patologia": "Alergias respiratorias", "contratable": "SI" },
+        { "patologia": "Hígado graso", "contratable": "SI" },
+        { "patologia": "Hepatitis pasada ya curada", "contratable": "SI" },
+        { "patologia": "Transaminasas elevadas ", "contratable": "SI" },
+        { "patologia": "Esquizofrenia", "contratable": "SI" },
+        { "patologia": "Obesidad", "contratable": "SI" },
+        { "patologia": "Fibromialgia", "contratable": "SI" },
+        { "patologia": "Epilepsia ", "contratable": "SI" }
+        ],
+
+        "EUROPEA": [
+        { "patologia": "Infarto de miocardio", "contratable": "INFORME MEDICO" },
+        { "patologia": "Angina de pecho", "contratable": "INFORME MEDICO" },
+        { "patologia": "Cardiopatía isquémica", "contratable": "INFORME MEDICO" },
+        { "patologia": "Insuficiencia cardíaca", "contratable": "INFORME MEDICO" },
+        { "patologia": "Arritmias graves (fibrilación auricular)", "contratable": "INFORME MEDICO" },
+        { "patologia": "Valvulopatías cardíacas", "contratable": "INFORME MEDICO" },
+        { "patologia": "Miocardiopatías", "contratable": "INFORME MEDICO" },
+        { "patologia": "Stent  ", "contratable": "INFORME MEDICO" },
+        { "patologia": "Bypass coronario", "contratable": "INFORME MEDICO" },
+        { "patologia": "Trombosis / embolia", "contratable": "INFORME MEDICO" },
+        { "patologia": "Ictus / ACV / Derrame cerebral", "contratable": "INFORME MEDICO" },
+        { "patologia": "AIT (mini-ictus)", "contratable": "INFORME MEDICO" },
+        { "patologia": "Hipertensión arterial diagnosticada", "contratable": "INFORME MEDICO" },
+        { "patologia": "Diabetes tipo 2", "contratable": "INFORME MEDICO" },
+        { "patologia": "Asma grave", "contratable": "INFORME MEDICO" },
+        { "patologia": "Insuficiencia renal crónica", "contratable": "INFORME MEDICO" },
+        { "patologia": "Hepatitis crónica activa", "contratable": "INFORME MEDICO" },
+        { "patologia": "Parkinson", "contratable": "INFORME MEDICO" },
+        { "patologia": "Epilepsia activa", "contratable": "INFORME MEDICO" },
+        { "patologia": "Enfermedades autoinmunes graves (lupus, artritis reumatoide)", "contratable": "INFORME MEDICO" },
+        { "patologia": "Pruebas diagnósticas graves pendientes (biopsia, TAC, RMN)", "contratable": "INFORME MEDICO" },
+        { "patologia": "Cáncer", "contratable": "INFORME MEDICO" },
+        { "patologia": "Cáncer tratado hace menos de 5 años", "contratable": "INFORME MEDICO" },
+        { "patologia": "Recaída oncológica", "contratable": "INFORME MEDICO" },
+        { "patologia": "Leucemia", "contratable": "INFORME MEDICO" },
+        { "patologia": "Linfoma", "contratable": "INFORME MEDICO" },
+        { "patologia": "Mieloma", "contratable": "INFORME MEDICO" },
+        { "patologia": "EPOC", "contratable": "INFORME MEDICO" },
+        { "patologia": "Fibrosis pulmonar", "contratable": "INFORME MEDICO" },
+        { "patologia": "Diálisis", "contratable": "INFORME MEDICO" },
+        { "patologia": "Cirrosis hepática", "contratable": "INFORME MEDICO" },
+        { "patologia": "Alzheimer", "contratable": "INFORME MEDICO" },
+        { "patologia": "Demencia", "contratable": "INFORME MEDICO" },
+        { "patologia": "Esclerosis múltiple", "contratable": "INFORME MEDICO" },
+        { "patologia": "Incapacidad permanente total o parcial", "contratable": "INFORME MEDICO" },
+        { "patologia": "Trámite de incapacidad iniciado", "contratable": "INFORME MEDICO" },
+
+        { "patologia": "Colesterol alto sin enfermedad", "contratable": "SI" },
+        { "patologia": "Hipertensión puntual sin diagnóstico", "contratable": "SI" },
+        { "patologia": "Prediabetes", "contratable": "SI" },
+        { "patologia": "Diabetes gestacional finalizada", "contratable": "SI" },
+        { "patologia": "Tumores benignos", "contratable": "SI" },
+        { "patologia": "Cáncer superado hace más de 5 años sin recaída", "contratable": "SI" },
+        { "patologia": "Migrañas", "contratable": "SI" },
+        { "patologia": "Vértigos", "contratable": "SI" },
+        { "patologia": "Asma leve controlada", "contratable": "SI" },
+        { "patologia": "Hígado graso", "contratable": "SI" },
+        { "patologia": "Infecciones leves o puntuales", "contratable": "SI" },
+        { "patologia": "Analíticas rutinarias", "contratable": "SI" },
+        { "patologia": "Diabetes", "contratable": "SI" }
+        ],
+
+        "OCASO": [
+        { "patologia": "Enfermedad crónica con tratamiento y seguimiento por especialista", "contratable": "INFORME MEDICO" },
+        { "patologia": "Cardiopatías crónicas (infarto, insuficiencia cardíaca, arritmias)", "contratable": "INFORME MEDICO" },
+        { "patologia": "Enfermedad pulmonar crónica (EPOC, fibrosis pulmonar)", "contratable": "INFORME MEDICO" },
+        { "patologia": "Enfermedad neurológica crónica (Alzheimer, Parkinson, demencia)", "contratable": "INFORME MEDICO" },
+        { "patologia": "Enfermedad renal crónica / diálisis", "contratable": "INFORME MEDICO" },
+        { "patologia": "Enfermedad hepática crónica (cirrosis)", "contratable": "INFORME MEDICO" },
+        { "patologia": "Cáncer", "contratable": "INFORME MEDICO" },
+        { "patologia": "Cáncer tratado hace menos de 5 años", "contratable": "INFORME MEDICO" },
+        { "patologia": "Invalidez dictaminada por la Seguridad Social", "contratable": "INFORME MEDICO" },
+        { "patologia": "Trámite de invalidez iniciado", "contratable": "INFORME MEDICO" },
+
+        { "patologia": "Artrosis", "contratable": "SI" },
+        { "patologia": "Diabetes tipo 2 hasta los 60 años", "contratable": "SI" },
+        { "patologia": "Cáncer superado hace más de 5 años sin recaída", "contratable": "SI" },
+        { "patologia": "Hipertensión controlada", "contratable": "SI" },
+        { "patologia": "Colesterol alto", "contratable": "SI" },
+        { "patologia": "Asma leve controlada", "contratable": "SI" },
+        { "patologia": "Incapacidades motrices", "contratable": "SI" },
+        { "patologia": "Enfermedades leves sin seguimiento especializado", "contratable": "SI" }
+        ],
+
+
+        "AURA": [
+        { "patologia": "Cáncer ", "contratable": "INFORME MEDICO" },
+        { "patologia": "Trasplante de órganos", "contratable": "INFORME MEDICO" },
+        { "patologia": "Trasplante de médula ósea", "contratable": "INFORME MEDICO" },
+        { "patologia": "Síndrome de Down", "contratable": "INFORME MEDICO" },
+        { "patologia": "Otros trastornos congénitos graves", "contratable": "INFORME MEDICO" },
+        { "patologia": "Infarto de miocardio", "contratable": "INFORME MEDICO" },
+        { "patologia": "Cardiopatía isquémica", "contratable": "INFORME MEDICO" },
+        { "patologia": "Insuficiencia cardíaca", "contratable": "INFORME MEDICO" },
+        { "patologia": "Arritmias graves", "contratable": "INFORME MEDICO" },
+        { "patologia": "Embolia", "contratable": "INFORME MEDICO" },
+        { "patologia": "Ictus", "contratable": "INFORME MEDICO" },
+        { "patologia": "Insuficiencia respiratoria", "contratable": "INFORME MEDICO" },
+        { "patologia": "EPOC", "contratable": "INFORME MEDICO" },
+        { "patologia": "Fibrosis pulmonar", "contratable": "INFORME MEDICO" },
+        { "patologia": "Cirrosis hepática", "contratable": "INFORME MEDICO" },
+        { "patologia": "Hepatitis crónica", "contratable": "INFORME MEDICO" },
+        { "patologia": "Insuficiencia renal crónica", "contratable": "INFORME MEDICO" },
+        { "patologia": "Diálisis", "contratable": "INFORME MEDICO" },
+        { "patologia": "Esclerosis múltiple", "contratable": "INFORME MEDICO" },
+        { "patologia": "Lupus", "contratable": "INFORME MEDICO" },
+        { "patologia": "Otras enfermedades inmunológicas graves", "contratable": "INFORME MEDICO" },
+        { "patologia": "Alzheimer", "contratable": "INFORME MEDICO" },
+        { "patologia": "Demencia", "contratable": "INFORME MEDICO" },
+        { "patologia": "Parkinson", "contratable": "INFORME MEDICO" },
+        { "patologia": "Esquizofrenia", "contratable": "INFORME MEDICO" },
+        { "patologia": "Depresión grave crónica", "contratable": "INFORME MEDICO" },
+        { "patologia": "Trastorno bipolar", "contratable": "INFORME MEDICO" },
+        { "patologia": "VIH / SIDA", "contratable": "INFORME MEDICO" },
+        { "patologia": "Hipertensión en tratamiento crónico", "contratable": "INFORME MEDICO" },
+        { "patologia": "Diabetes en tratamiento crónico", "contratable": "INFORME MEDICO" },
+        { "patologia": "Colesterol en tratamiento crónico", "contratable": "INFORME MEDICO" },
+        { "patologia": "Tratamiento crónico no declarado", "contratable": "INFORME MEDICO" },
+
+        { "patologia": "Hipertensión sin tratamiento", "contratable": "SI" },
+        { "patologia": "Colesterol sin tratamiento", "contratable": "SI" },
+        { "patologia": "Tratamientos puntuales", "contratable": "SI" }
+        ]
+    };
+
+
+    // =========================================================
+    // 2) STORAGE (Persistencia admin)
+    // =========================================================
+    // ACTUALIZADO: v4 para soportar "deletedCompanies" y migración desde v3
+    const STORAGE_KEY_DATA_V3 = "diblafe_pathologies_overrides_v3";
+    const STORAGE_KEY_DATA_V4 = "diblafe_pathologies_overrides_v4";
+    const STORAGE_KEY_ADMIN = "diblafe_admin_logged_v4";
+    const ADMIN_PASSWORD = "1234";
+
+    // Trabajamos con una copia "viva" que mezcla BASE + OVERRIDES - ELIMINADAS
+    let PATHOLOGIES = {};
+
+    // =========================================================
+    // Utilidades
+    // =========================================================
+    function normalizeText(s){
+      if (s === null || s === undefined) return "";
+      return String(s)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+    }
+
+    function safeVal(v){
+      if (v === null || v === undefined) return "";
+      return String(v).trim();
+    }
+
+    function normalizeCompanyKey(k){
+      const nk = normalizeText(k).toUpperCase();
+      return nk;
+    }
+
+    function badgeClassByContratable(v){
+      const nv = normalizeText(v);
+      if (nv === "si") return "ok";
+      if (nv === "informe medico" || nv.includes("informe")) return "warn";
+      return "warn";
+    }
+
+    function debounce(fn, wait){
+      let t;
+      return function(){
+        const args = arguments;
+        clearTimeout(t);
+        t = setTimeout(function(){ fn.apply(null, args); }, wait);
+      }
+    }
+
+    function deepClone(obj){
+      return JSON.parse(JSON.stringify(obj || {}));
+    }
+
+    // =========================================================
+    // OVERRIDES v4: { data: {COMPANY:[...]}, deleted: [COMPANY,...] }
+    // Migración desde v3 (formato antiguo: {COMPANY:[...], COMPANY2:[...]} )
+    // =========================================================
+    function loadOverridesV4(){
+      // 1) intenta v4
+      try{
+        const raw4 = localStorage.getItem(STORAGE_KEY_DATA_V4);
+        if (raw4){
+          const parsed4 = JSON.parse(raw4);
+          if (parsed4 && typeof parsed4 === "object"){
+            const data = (parsed4.data && typeof parsed4.data === "object") ? parsed4.data : {};
+            const deleted = Array.isArray(parsed4.deleted) ? parsed4.deleted : [];
+            return { data: data, deleted: deleted };
+          }
+        }
+      }catch(e){}
+
+      // 2) migra v3 si existe
+      try{
+        const raw3 = localStorage.getItem(STORAGE_KEY_DATA_V3);
+        if (raw3){
+          const parsed3 = JSON.parse(raw3);
+          if (parsed3 && typeof parsed3 === "object"){
+            // si parece v4 ya, lo aceptamos
+            if (parsed3.data || parsed3.deleted){
+              const data2 = (parsed3.data && typeof parsed3.data === "object") ? parsed3.data : {};
+              const deleted2 = Array.isArray(parsed3.deleted) ? parsed3.deleted : [];
+              const migrated = { data: data2, deleted: deleted2 };
+              saveOverridesV4(migrated);
+              return migrated;
+            }
+
+            // si es v3 plano: { COMPANY:[...] }
+            const migrated = { data: parsed3, deleted: [] };
+            saveOverridesV4(migrated);
+            return migrated;
+          }
+        }
+      }catch(e){}
+
+      return { data: {}, deleted: [] };
+    }
+
+    function saveOverridesV4(overrides){
+      try{
+        const clean = overrides && typeof overrides === "object" ? overrides : { data:{}, deleted:[] };
+        if (!clean.data || typeof clean.data !== "object") clean.data = {};
+        if (!Array.isArray(clean.deleted)) clean.deleted = [];
+        localStorage.setItem(STORAGE_KEY_DATA_V4, JSON.stringify(clean));
+      }catch(e){
+        // sin acciones extra
+      }
+    }
+
+    function canonicalizeCompanies(obj){
+      const out = {};
+      Object.keys(obj || {}).forEach(function(k){
+        const ck = normalizeCompanyKey(k);
+        if (!ck) return;
+        const arr = Array.isArray(obj[k]) ? obj[k] : [];
+        if (!out[ck]) out[ck] = [];
+        out[ck] = out[ck].concat(deepClone(arr));
+      });
+
+      Object.keys(out).forEach(function(k){
+        if (!Array.isArray(out[k])) out[k] = [];
+      });
+
+      return out;
+    }
+
+    function dedupeCompanyList(list){
+      const seen = new Set();
+      const out = [];
+      (list || []).forEach(function(r){
+        const name = safeVal(r && r.patologia);
+        const key = normalizeText(name);
+        if (!key) return;
+        if (seen.has(key)) return;
+        seen.add(key);
+        out.push({ patologia: name, contratable: safeVal(r && r.contratable) });
+      });
+      return out;
+    }
+
+    function mergeBaseAndOverrides(){
+      const baseRaw = canonicalizeCompanies(PATHOLOGIES_BASE);
+
+      const ov = loadOverridesV4();
+      const ovData = canonicalizeCompanies(ov.data || {});
+      const deleted = (ov.deleted || []).map(function(x){ return normalizeCompanyKey(x); });
+
+      const out = deepClone(baseRaw);
+
+      // aplica overrides (sustitución total por compañía)
+      Object.keys(ovData).forEach(function(company){
+        if (!Array.isArray(ovData[company])) return;
+        out[company] = dedupeCompanyList(ovData[company]);
+      });
+
+      // dedupe final
+      Object.keys(out).forEach(function(company){
+        out[company] = dedupeCompanyList(out[company]);
+      });
+
+      // aplica eliminadas (se quitan aunque existan en base)
+      deleted.forEach(function(c){
+        if (out[c]) delete out[c];
+      });
+
+      PATHOLOGIES = out;
+    }
+
+    // =========================================================
+    // BUSCADOR
+    // =========================================================
+    const PREFERRED_COMPANY_ORDER = ["HELVETIA","EUROPEA","OCASO","AURA"];
+    let COMPANIES = [];
+    const INDEX = {};
+
+    const elQ = document.getElementById("q");
+    const elBtnBuscar = document.getElementById("btnBuscar");
+    const elBtnLimpiar = document.getElementById("btnLimpiar");
+    const elResults = document.getElementById("results");
+    const elNoResults = document.getElementById("noResults");
+
+    function buildCompanies(){
+      const keys = Object.keys(PATHOLOGIES || {});
+      const set = new Set(keys.map(function(k){ return normalizeCompanyKey(k); }));
+
+      const ordered = [];
+      PREFERRED_COMPANY_ORDER.forEach(function(k){
+        const ck = normalizeCompanyKey(k);
+        if (set.has(ck)) ordered.push(ck);
+      });
+
+      const rest = keys
+        .map(function(k){ return normalizeCompanyKey(k); })
+        .filter(function(k){ return ordered.indexOf(k) === -1; });
+
+      const restUnique = Array.from(new Set(rest)).sort(function(a,b){
+        if (a < b) return -1;
+        if (a > b) return 1;
+        return 0;
+      });
+
+      COMPANIES = ordered.concat(restUnique);
+    }
+
+    function buildIndex(){
+      buildCompanies();
+      // limpia index previo
+      Object.keys(INDEX).forEach(function(k){ delete INDEX[k]; });
+
+      COMPANIES.forEach(function(c){
+        const map = {};
+        (PATHOLOGIES[c] || []).forEach(function(r){
+          const key = normalizeText(r.patologia);
+          if (!key) return;
+          if (map[key] === undefined) map[key] = safeVal(r.contratable);
+        });
+        INDEX[c] = map;
+      });
+    }
+
+    function clearResults(){
+      elResults.innerHTML = "";
+      elNoResults.style.display = "none";
+    }
+
+    function findBestRowInCompany(company, nq, preferredKey){
+      const rows = (PATHOLOGIES[company] || []);
+      if (!rows.length) return null;
+
+      if (preferredKey){
+        for (let i = 0; i < rows.length; i++){
+          const k = normalizeText(rows[i].patologia);
+          if (k && k === preferredKey) return rows[i];
+        }
+      }
+
+      for (let i = 0; i < rows.length; i++){
+        const k = normalizeText(rows[i].patologia);
+        if (k && k.includes(nq)) return rows[i];
+      }
+
+      return null;
+    }
+
+    function search(){
+      const q = (elQ.value || "").trim();
+      clearResults();
+
+      if (!q){
+        return;
+      }
+
+      const nq = normalizeText(q);
+
+      const allMatches = [];
+      COMPANIES.forEach(function(c){
+        (PATHOLOGIES[c] || []).forEach(function(r){
+          if (normalizeText(r.patologia).includes(nq)) allMatches.push(r);
+        });
+      });
+
+      if (!allMatches.length){
+        elNoResults.style.display = "block";
+        return;
+      }
+
+      const seen = new Set();
+      const unique = [];
+      allMatches.forEach(function(r){
+        const key = normalizeText(r.patologia);
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        unique.push({ key: key, label: safeVal(r.patologia) });
+      });
+
+      unique.forEach(function(item){
+        const card = document.createElement("div");
+        card.className = "patCard";
+
+        const title = document.createElement("p");
+        title.className = "patTitle";
+        title.textContent = item.label;
+
+        const grid = document.createElement("div");
+        grid.className = "grid";
+
+        COMPANIES.forEach(function(c){
+          const bestRow = findBestRowInCompany(c, nq, item.key);
+
+          const mini = document.createElement("div");
+          mini.className = "mini";
+
+          const cc = document.createElement("div");
+          cc.className = "c";
+          cc.textContent = c;
+
+          const pill = document.createElement("span");
+
+          if (!bestRow){
+            pill.className = "pill na";
+            pill.textContent = "—";
+            mini.classList.add("bg-na");
+          } else {
+            const val = safeVal(bestRow.contratable);
+            const cls = badgeClassByContratable(val);
+            pill.className = "pill " + cls;
+            pill.textContent = val || "SIN DATO";
+
+            if (cls === "ok") mini.classList.add("bg-ok");
+            else mini.classList.add("bg-warn");
+          }
+
+          mini.appendChild(cc);
+          mini.appendChild(pill);
+          grid.appendChild(mini);
+        });
+
+        card.appendChild(title);
+        card.appendChild(grid);
+        elResults.appendChild(card);
+      });
+    }
+
+    // =========================================================
+    // ADMIN
+    // =========================================================
+    const btnOpenAdmin = document.getElementById("btnOpenAdmin");
+    const adminModal = document.getElementById("adminModal");
+    const adminBackdrop = document.getElementById("adminBackdrop");
+    const btnCloseAdmin = document.getElementById("btnCloseAdmin");
+
+    const adminLoginBox = document.getElementById("adminLoginBox");
+    const adminPanelBox = document.getElementById("adminPanelBox");
+
+    const adminPass = document.getElementById("adminPass");
+    const btnAdminLogin = document.getElementById("btnAdminLogin");
+    const btnAdminCancel = document.getElementById("btnAdminCancel");
+    const adminLoginHint = document.getElementById("adminLoginHint");
+
+    const adminNewCompany = document.getElementById("adminNewCompany");
+    const btnAddCompany = document.getElementById("btnAddCompany");
+
+    const adminCompany = document.getElementById("adminCompany");
+    const btnDeleteCompany = document.getElementById("btnDeleteCompany");
+
+    const adminPatologia = document.getElementById("adminPatologia");
+    const adminContratable = document.getElementById("adminContratable");
+    const btnAdminSave = document.getElementById("btnAdminSave");
+    const btnAdminClearForm = document.getElementById("btnAdminClearForm");
+    const btnAdminLogout = document.getElementById("btnAdminLogout");
+    const adminCrudHint = document.getElementById("adminCrudHint");
+    const adminFilter = document.getElementById("adminFilter");
+    const adminList = document.getElementById("adminList");
+
+    let adminEditingKey = null;
+
+    function isAdminLogged(){
+      try{
+        return localStorage.getItem(STORAGE_KEY_ADMIN) === "1";
+      }catch(e){
+        return false;
+      }
+    }
+
+    function setAdminLogged(val){
+      try{
+        localStorage.setItem(STORAGE_KEY_ADMIN, val ? "1" : "0");
+      }catch(e){}
+    }
+
+    function openAdmin(){
+      adminModal.classList.add("open");
+      adminModal.setAttribute("aria-hidden","false");
+
+      adminLoginHint.style.display = "none";
+      adminCrudHint.style.display = "none";
+
+      if (isAdminLogged()){
+        showAdminPanel();
+      }else{
+        showAdminLogin();
+      }
+    }
+
+    function closeAdmin(){
+      adminModal.classList.remove("open");
+      adminModal.setAttribute("aria-hidden","true");
+      adminPass.value = "";
+      adminLoginHint.style.display = "none";
+      adminCrudHint.style.display = "none";
+    }
+
+    function showAdminLogin(){
+      adminLoginBox.style.display = "block";
+      adminPanelBox.style.display = "none";
+      adminPass.value = "";
+      adminPass.focus();
+    }
+
+    function showAdminPanel(){
+      adminLoginBox.style.display = "none";
+      adminPanelBox.style.display = "block";
+      fillCompanySelect();
+      resetAdminForm();
+      renderAdminList();
+    }
+
+    function fillCompanySelect(){
+      adminCompany.innerHTML = "";
+      COMPANIES.forEach(function(c){
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = c;
+        adminCompany.appendChild(opt);
+      });
+
+      if ((!adminCompany.value || !PATHOLOGIES[adminCompany.value]) && COMPANIES.length){
+        adminCompany.value = COMPANIES[0];
+      }
+    }
+
+    function resetAdminForm(){
+      adminEditingKey = null;
+      adminPatologia.value = "";
+      adminContratable.value = "SI";
+      adminCrudHint.style.display = "none";
+    }
+
+    function showCrudHint(text, kind){
+      adminCrudHint.textContent = text;
+      adminCrudHint.className = "adminHint " + (kind === "ok" ? "ok" : (kind === "bad" ? "bad" : ""));
+      adminCrudHint.style.display = "block";
+    }
+
+    function showLoginHint(text){
+      adminLoginHint.textContent = text;
+      adminLoginHint.style.display = "block";
+    }
+
+    function getCompanyList(company){
+      const c = normalizeCompanyKey(company);
+      const list = Array.isArray(PATHOLOGIES[c]) ? PATHOLOGIES[c] : [];
+      return list;
+    }
+
+    function setCompanyList(company, list){
+      const c = normalizeCompanyKey(company);
+      if (!PATHOLOGIES) PATHOLOGIES = {};
+      PATHOLOGIES[c] = Array.isArray(list) ? list : [];
+    }
+
+    function persistCompany(company){
+      const c = normalizeCompanyKey(company);
+      const ov = loadOverridesV4();
+      if (!ov.data || typeof ov.data !== "object") ov.data = {};
+      if (!Array.isArray(ov.deleted)) ov.deleted = [];
+
+      ov.data[c] = deepClone(getCompanyList(c));
+      // si estaba eliminada, la reactivamos
+      ov.deleted = ov.deleted.filter(function(x){ return normalizeCompanyKey(x) !== c; });
+
+      saveOverridesV4(ov);
+
+      mergeBaseAndOverrides();
+      buildIndex();
+    }
+
+    function addCompany(companyName){
+      const raw = safeVal(companyName);
+      const c = normalizeCompanyKey(raw);
+
+      if (!raw){
+        showCrudHint("La compañía no puede estar vacía.", "bad");
+        return false;
+      }
+      if (!c){
+        showCrudHint("Nombre de compañía inválido.", "bad");
+        return false;
+      }
+
+      // si ya existe visible, no duplicar
+      if (PATHOLOGIES[c]){
+        showCrudHint("La compañía ya existe: " + c, "bad");
+        return false;
+      }
+
+      // reactivamos si estaba en deleted
+      const ov = loadOverridesV4();
+      if (!ov.data || typeof ov.data !== "object") ov.data = {};
+      if (!Array.isArray(ov.deleted)) ov.deleted = [];
+      ov.deleted = ov.deleted.filter(function(x){ return normalizeCompanyKey(x) !== c; });
+
+      // creamos vacía en overrides.data para persistir
+      ov.data[c] = Array.isArray(ov.data[c]) ? ov.data[c] : [];
+      saveOverridesV4(ov);
+
+      mergeBaseAndOverrides();
+      buildIndex();
+
+      fillCompanySelect();
+      adminCompany.value = c;
+      renderAdminList();
+
+      showCrudHint("Compañía añadida: " + c, "ok");
+      return true;
+    }
+
+    function deleteCompany(company){
+      const c = normalizeCompanyKey(company);
+      if (!c){
+        showCrudHint("Compañía inválida.", "bad");
+        return false;
+      }
+      if (!PATHOLOGIES[c]){
+        showCrudHint("Esa compañía ya no existe en la vista.", "bad");
+        return false;
+      }
+
+      const ok = window.confirm("¿Eliminar la compañía '" + c + "' y TODAS sus patologías?\n\nEsto se puede revertir volviendo a añadir la compañía.");
+      if (!ok) return false;
+
+      const ov = loadOverridesV4();
+      if (!ov.data || typeof ov.data !== "object") ov.data = {};
+      if (!Array.isArray(ov.deleted)) ov.deleted = [];
+
+      // marcamos como eliminada (oculta incluso si está en BASE)
+      if (ov.deleted.map(function(x){ return normalizeCompanyKey(x); }).indexOf(c) === -1){
+        ov.deleted.push(c);
+      }
+      // y eliminamos su override data si existía
+      if (ov.data[c]) delete ov.data[c];
+
+      saveOverridesV4(ov);
+
+      mergeBaseAndOverrides();
+      buildIndex();
+
+      // refresca UI admin
+      fillCompanySelect();
+      resetAdminForm();
+      adminFilter.value = "";
+      renderAdminList();
+
+      // refresca resultados si había búsqueda
+      if ((elQ.value || "").trim()){
+        search();
+      }
+
+      showCrudHint("Compañía eliminada: " + c, "ok");
+      return true;
+    }
+
+    function upsertPathology(company, patText, contratable){
+      const c = normalizeCompanyKey(company);
+      const name = safeVal(patText);
+      const val = safeVal(contratable) || "SI";
+      const key = normalizeText(name);
+
+      if (!name){
+        showCrudHint("La patología no puede estar vacía.", "bad");
+        return false;
+      }
+
+      // si la compañía no existía (caso raro), la creamos
+      if (!PATHOLOGIES[c]) setCompanyList(c, []);
+
+      const list = deepClone(getCompanyList(c));
+      let foundIdx = -1;
+
+      for (let i = 0; i < list.length; i++){
+        if (normalizeText(list[i].patologia) === key){
+          foundIdx = i;
+          break;
+        }
+      }
+
+      if (foundIdx >= 0){
+        list[foundIdx].patologia = name;
+        list[foundIdx].contratable = val;
+      }else{
+        list.push({ patologia: name, contratable: val });
+      }
+
+      list.sort(function(a,b){
+        const ka = normalizeText(a.patologia);
+        const kb = normalizeText(b.patologia);
+        if (ka < kb) return -1;
+        if (ka > kb) return 1;
+        return 0;
+      });
+
+      setCompanyList(c, dedupeCompanyList(list));
+      persistCompany(c);
+
+      showCrudHint(foundIdx >= 0 ? "Actualizado correctamente." : "Añadido correctamente.", "ok");
+      return true;
+    }
+
+    function deletePathology(company, normalizedKey){
+      const c = normalizeCompanyKey(company);
+      const list = deepClone(getCompanyList(c));
+      const filtered = list.filter(function(r){
+        return normalizeText(r.patologia) !== normalizedKey;
+      });
+
+      setCompanyList(c, filtered);
+      persistCompany(c);
+
+      showCrudHint("Eliminado correctamente.", "ok");
+      return true;
+    }
+
+    function renderAdminList(){
+      const company = normalizeCompanyKey(adminCompany.value);
+      const filter = normalizeText(adminFilter.value || "");
+      const list = deepClone(getCompanyList(company));
+
+      adminList.innerHTML = "";
+
+      if (!company || !PATHOLOGIES[company]){
+        const empty = document.createElement("div");
+        empty.style.padding = "12px";
+        empty.style.color = "#475569";
+        empty.style.fontWeight = "900";
+        empty.textContent = "No hay compañía seleccionada.";
+        adminList.appendChild(empty);
+        return;
+      }
+
+      const rows = list.filter(function(r){
+        const n = normalizeText(r.patologia);
+        return !filter || n.includes(filter);
+      });
+
+      if (!rows.length){
+        const empty = document.createElement("div");
+        empty.style.padding = "12px";
+        empty.style.color = "#475569";
+        empty.style.fontWeight = "900";
+        empty.textContent = "No hay patologías (o el filtro no coincide).";
+        adminList.appendChild(empty);
+        return;
+      }
+
+      rows.forEach(function(r){
+        const row = document.createElement("div");
+        row.className = "row";
+
+        const name = document.createElement("div");
+        name.className = "rowName";
+        name.title = safeVal(r.patologia);
+        name.textContent = safeVal(r.patologia);
+
+        const right = document.createElement("div");
+        right.className = "rowRight";
+
+        const pill = document.createElement("span");
+        const cls = badgeClassByContratable(r.contratable);
+        pill.className = "pill adminFull " + (cls === "ok" ? "ok" : "warn");
+        pill.textContent = safeVal(r.contratable) || "SIN DATO";
+
+        const btnEdit = document.createElement("button");
+        btnEdit.type = "button";
+        btnEdit.className = "tinyBtn";
+        btnEdit.textContent = "Editar";
+
+        btnEdit.addEventListener("click", function(){
+          adminEditingKey = normalizeText(r.patologia);
+          adminPatologia.value = safeVal(r.patologia);
+          adminContratable.value = (badgeClassByContratable(r.contratable) === "ok") ? "SI" : "INFORME MEDICO";
+          showCrudHint("Editando: guarda para aplicar cambios.", "");
+          adminPatologia.focus();
+        });
+
+        const btnDel = document.createElement("button");
+        btnDel.type = "button";
+        btnDel.className = "tinyBtn danger";
+        btnDel.textContent = "Eliminar";
+
+        btnDel.addEventListener("click", function(){
+          deletePathology(company, normalizeText(r.patologia));
+          renderAdminList();
+          resetAdminForm();
+        });
+
+        right.appendChild(pill);
+        right.appendChild(btnEdit);
+        right.appendChild(btnDel);
+
+        row.appendChild(name);
+        row.appendChild(right);
+        adminList.appendChild(row);
+      });
+    }
+
+    function adminSave(){
+      const company = adminCompany.value;
+      const pat = adminPatologia.value;
+      const contr = adminContratable.value;
+
+      const ok = upsertPathology(company, pat, contr);
+      if (!ok) return;
+
+      renderAdminList();
+      adminEditingKey = null;
+
+      // si hay búsqueda activa, refresca resultados
+      if ((elQ.value || "").trim()){
+        search();
+      }
+    }
+
+    // =========================================================
+    // INIT
+    // =========================================================
+    function init(){
+      mergeBaseAndOverrides();
+      buildIndex();
+      clearResults();
+    }
+
+    // =========================================================
+    // EVENTOS BUSCADOR
+    // =========================================================
+    elBtnBuscar.addEventListener("click", function(){ search(); });
+
+    elBtnLimpiar.addEventListener("click", function(){
+      elQ.value = "";
+      clearResults();
+      elQ.focus();
+    });
+
+    elQ.addEventListener("keydown", function(e){
+      if (e.key === "Enter"){
+        e.preventDefault();
+        search();
+      }
+      if (e.key === "Escape"){
+        e.preventDefault();
+        elQ.value = "";
+        clearResults();
+      }
+    });
+
+    // búsqueda rápida (si quieres SOLO botón, comenta estas 3 líneas)
+    elQ.addEventListener("input", debounce(function(){
+      search();
+    }, 180));
+
+    // =========================================================
+    // EVENTOS ADMIN
+    // =========================================================
+    btnOpenAdmin.addEventListener("click", function(){ openAdmin(); });
+
+    btnCloseAdmin.addEventListener("click", function(){ closeAdmin(); });
+    adminBackdrop.addEventListener("click", function(){ closeAdmin(); });
+
+    document.addEventListener("keydown", function(e){
+      if (!adminModal.classList.contains("open")) return;
+      if (e.key === "Escape"){
+        e.preventDefault();
+        closeAdmin();
+      }
+    });
+
+    btnAdminCancel.addEventListener("click", function(){
+      closeAdmin();
+    });
+
+    btnAdminLogin.addEventListener("click", function(){
+      const pass = safeVal(adminPass.value);
+      if (pass === ADMIN_PASSWORD){
+        setAdminLogged(true);
+        adminLoginHint.style.display = "none";
+        showAdminPanel();
+      }else{
+        showLoginHint("Contraseña incorrecta.");
+      }
+    });
+
+    adminPass.addEventListener("keydown", function(e){
+      if (e.key === "Enter"){
+        e.preventDefault();
+        btnAdminLogin.click();
+      }
+    });
+
+    btnAdminLogout.addEventListener("click", function(){
+      setAdminLogged(false);
+      showAdminLogin();
+    });
+
+    btnAdminClearForm.addEventListener("click", function(){
+      resetAdminForm();
+      adminPatologia.focus();
+    });
+
+    btnAdminSave.addEventListener("click", function(){
+      adminSave();
+    });
+
+    adminCompany.addEventListener("change", function(){
+      resetAdminForm();
+      adminFilter.value = "";
+      renderAdminList();
+    });
+
+    adminFilter.addEventListener("input", debounce(function(){
+      renderAdminList();
+    }, 120));
+
+    // Añadir compañía
+    btnAddCompany.addEventListener("click", function(){
+      const ok = addCompany(adminNewCompany.value);
+      if (ok){
+        adminNewCompany.value = "";
+        adminFilter.value = "";
+        resetAdminForm();
+        renderAdminList();
+      }
+    });
+
+    adminNewCompany.addEventListener("keydown", function(e){
+      if (e.key === "Enter"){
+        e.preventDefault();
+        btnAddCompany.click();
+      }
+    });
+
+    // Eliminar compañía
+    btnDeleteCompany.addEventListener("click", function(){
+      const c = adminCompany.value;
+      const ok = deleteCompany(c);
+      if (ok){
+        // intenta dejar una compañía seleccionada
+        if (COMPANIES.length){
+          adminCompany.value = COMPANIES[0];
+        }
+        renderAdminList();
+      }
+    });
+
+    // =========================================================
+    // ARRANQUE
+    // =========================================================
+    init();
+  </script>
+</body>
+</html>
