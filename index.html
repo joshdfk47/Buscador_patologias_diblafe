@@ -922,8 +922,8 @@
           <div class="adminActionsRow">
             <button class="btn" id="btnAdminSave" type="button">Añadir patología</button>
             <button class="btn2" id="btnAdminClearForm" type="button">Limpiar</button>
-            <button class="btn2" id="btnAdminLogout" type="button">Cerrar</button>
           </div>
+
 
           <div class="adminHint" id="adminCrudHint" style="display:none; grid-column: 1 / -1;"></div>
 
@@ -1511,7 +1511,7 @@
     const adminContratable = document.getElementById("adminContratable");
     const btnAdminSave = document.getElementById("btnAdminSave");
     const btnAdminClearForm = document.getElementById("btnAdminClearForm");
-    const btnAdminLogout = document.getElementById("btnAdminLogout");
+    
     const adminCrudHint = document.getElementById("adminCrudHint");
     const adminFilter = document.getElementById("adminFilter");
     const adminList = document.getElementById("adminList");
@@ -2116,10 +2116,7 @@
       }
     });
 
-    btnAdminLogout.addEventListener("click", function(){
-      setAdminLogged(false);
-      showAdminLogin();
-    });
+
 
     btnAdminClearForm.addEventListener("click", function(){
       resetAdminForm();
