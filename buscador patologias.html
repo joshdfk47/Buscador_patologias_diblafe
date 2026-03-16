@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Buscador de Patologías (DIBLAFE)</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
     :root{
@@ -744,6 +745,9 @@
           <div class="adminActionsRow">
             <button class="btn" id="btnAdminSave" type="button">Guardar</button>
             <button class="btn2" id="btnAdminClearForm" type="button">Limpiar</button>
+            <button class="btn2" id="btnDownloadExcel" type="button">Descargar Excel</button>
+            <button class="btn2" id="btnUploadExcelTrigger" type="button">Cargar Excel</button>
+            <input type="file" id="adminFileInput" style="display:none" accept=".xlsx, .xls" />
             <button class="btn2" id="btnAdminLogout" type="button">Salir</button>
           </div>
 
@@ -1668,6 +1672,103 @@
       }
     }
 
+    function downloadExcel() {
+      const data = [];
+      data.push(["Compañia", "Patología", "Contratable"]);
+      
+      COMPANIES.forEach(function(company) {
+        const list = PATHOLOGIES[company] || [];
+        list.forEach(function(row) {
+          data.push([company, row.patologia, row.contratable]);
+        });
+      });
+
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Patologías");
+      XLSX.writeFile(workbook, "patologias_diblafe.xlsx");
+    }
+
+    function uploadExcel(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+          if (jsonData.length < 2) {
+            showCrudHint("El archivo Excel parece estar vacío o no tiene el formato correcto.", "bad");
+            return;
+          }
+
+          const rows = jsonData.slice(1);
+          const newData = {};
+          let count = 0;
+
+          rows.forEach(function(row) {
+            const company = String(row[0] || "").trim().toUpperCase();
+            const pat = String(row[1] || "").trim();
+            const contr = String(row[2] || "SI").trim();
+
+            if (company && pat) {
+              if (!newData[company]) newData[company] = [];
+              newData[company].push({ patologia: pat, contratable: contr });
+              count++;
+            }
+          });
+
+          if (count === 0) {
+            showCrudHint("No se encontraron patologías válidas para importar.", "bad");
+            return;
+          }
+
+          const ok = window.confirm("Se han encontrado " + count + " patologías en " + Object.keys(newData).length + " compañías.\n\n¿Quieres cargar estos datos? Se añadirán o actualizarán las patologías existentes.");
+          if (!ok) {
+            event.target.value = "";
+            return;
+          }
+
+          const ov = loadOverridesV4();
+          if (!ov.data) ov.data = {};
+          
+          Object.keys(newData).forEach(function(company) {
+            const c = normalizeCompanyKey(company);
+            // Para una carga masiva, ¿reemplazamos toda la compañía o añadimos?
+            // El usuario dice "añadir a ese excel descargado y subirselo", así que reemplazamos la compañía completa con lo que hay en el excel
+            ov.data[c] = newData[company];
+            
+            // si estaba eliminada, la activamos
+            if (Array.isArray(ov.deleted)) {
+              ov.deleted = ov.deleted.filter(function(x){ return normalizeCompanyKey(x) !== c; });
+            }
+          });
+
+          saveOverridesV4(ov);
+          mergeBaseAndOverrides();
+          buildIndex();
+          fillCompanySelect();
+          renderAdminList();
+          
+          if ((elQ.value || "").trim()){
+            search();
+          }
+
+          showCrudHint("¡Éxito! Se han cargado " + count + " patologías.", "ok");
+        } catch (err) {
+          console.error(err);
+          showCrudHint("Error al procesar el archivo Excel.", "bad");
+        }
+        event.target.value = "";
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
     // =========================================================
     // INIT
     // =========================================================
@@ -1796,6 +1897,19 @@
         }
         renderAdminList();
       }
+    });
+
+    // Excel
+    document.getElementById("btnDownloadExcel").addEventListener("click", function(){
+      downloadExcel();
+    });
+
+    document.getElementById("btnUploadExcelTrigger").addEventListener("click", function(){
+      document.getElementById("adminFileInput").click();
+    });
+
+    document.getElementById("adminFileInput").addEventListener("change", function(e){
+      uploadExcel(e);
     });
 
     // =========================================================
