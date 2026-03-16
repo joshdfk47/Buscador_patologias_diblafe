@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Login - Buscador de Patologías (DIBLAFE)</title>
+  <style>
+    :root{
+      --brand:#0b2b4c;
+      --brand2:#123b64;
+      --gold:#d6a23a;
+      --gold2:#b8862b;
+      --text:#0b1220;
+      --muted:#475569;
+      --line:#e6e8ee;
+      --danger:#ef4444;
+      --radius: 16px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, var(--brand) 0%, var(--brand2) 100%);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: var(--text);
+    }
+    .loginCard{
+      background: #fff;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+    .loginLogo{
+      height: 60px;
+      margin-bottom: 24px;
+    }
+    .loginCard h2{
+      color: var(--brand);
+      margin: 0 0 8px;
+      font-weight: 950;
+    }
+    .loginCard p{
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+    .loginInputGroup{
+      text-align: left;
+      margin-bottom: 20px;
+    }
+    .loginInputGroup label{
+      display: block;
+      margin-bottom: 8px;
+      color: var(--brand);
+      font-size: 12.5px;
+      font-weight: 900;
+    }
+    input{
+      width:100%;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background:#fff;
+      outline:none;
+      font-size: 15px;
+    }
+    input:focus{
+      border-color: rgba(214,162,58,.60);
+      box-shadow: 0 0 0 4px rgba(214,162,58,.18);
+    }
+    .btn{
+      width: 100%;
+      border: 1px solid rgba(11,43,76,.20);
+      background: linear-gradient(180deg, var(--gold) 0%, var(--gold2) 100%);
+      color: #1b1b1b;
+      font-weight: 950;
+      padding: 14px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-size: 15px;
+      margin-top: 10px;
+    }
+    #loginError{
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 15px;
+      display: none;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="loginCard">
+    <img src="logo-diblafe.png" alt="Diblafe" class="loginLogo">
+    <h2>Bienvenido</h2>
+    <p>Introduce tus credenciales para acceder al buscador de patologías.</p>
+    
+    <div class="loginInputGroup">
+      <label for="loginUser">Usuario</label>
+      <input type="text" id="loginUser" placeholder="Nombre de usuario" autocomplete="username">
+    </div>
+    
+    <div class="loginInputGroup">
+      <label for="loginPass">Contraseña</label>
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    
+    <button class="btn" onclick="handleLogin()">Entrar</button>
+    <div id="loginError">Usuario o contraseña incorrectos.</div>
+  </div>
+
+  <script>
+    const AUTH_SESSION_KEY = "diblafe_auth_session_v1";
+    const ACCOUNTS = {
+      "comercial": "V8ybiDWJZpwRZMZg",
+      "admin": "zdRbvS8B2yngW1ZR"
+    };
+
+    function handleLogin(){
+      const user = document.getElementById("loginUser").value.trim().toLowerCase();
+      const pass = document.getElementById("loginPass").value;
+      const err = document.getElementById("loginError");
+
+      if(ACCOUNTS[user] && ACCOUNTS[user] === pass){
+        const session = { 
+          user: user, 
+          role: user === "admin" ? "admin" : "comercial",
+          timestamp: Date.now()
+        };
+        localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+        window.location.href = "buscador patologias.html";
+      } else {
+        err.style.display = "block";
+      }
+    }
+
+    document.getElementById("loginPass").addEventListener("keypress", (e) => {
+      if(e.key === "Enter") handleLogin();
+    });
+    document.getElementById("loginUser").addEventListener("keypress", (e) => {
+      if(e.key === "Enter") document.getElementById("loginPass").focus();
+    });
+  </script>
+</body>
+</html>

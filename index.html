@@ -414,6 +414,27 @@
     }
     .modal.open{ display:block; }
 
+    .logoutBtn{
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 900;
+      padding: 10px 16px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid var(--line);
+      color: var(--brand);
+      font-weight: 950;
+      cursor: pointer;
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(4px);
+      transition: all 0.2s;
+    }
+    .logoutBtn:hover{
+      background: #fff;
+      transform: translateY(-2px);
+    }
+
     .modalBackdrop{
       position: absolute;
       inset: 0;
@@ -617,6 +638,8 @@
 </head>
 
 <body>
+  <button id="btnLogout" class="logoutBtn" style="display:none;" onclick="handleLogout()">Cerrar Sesión</button>
+
   <!-- TOPBAR -->
   <div class="topbar">
     <div class="wrap topbarWrap">
@@ -960,13 +983,14 @@
 
 
     // =========================================================
-    // 2) STORAGE (Persistencia admin)
+    // 2) STORAGE & AUTH (Persistencia y Cuentas)
     // =========================================================
     // ACTUALIZADO: v4 para soportar "deletedCompanies" y migración desde v3
     const STORAGE_KEY_DATA_V3 = "diblafe_pathologies_overrides_v3";
     const STORAGE_KEY_DATA_V4 = "diblafe_pathologies_overrides_v4";
-    const STORAGE_KEY_ADMIN = "diblafe_admin_logged_v4";
-    const ADMIN_PASSWORD = "1234";
+    const AUTH_SESSION_KEY = "diblafe_auth_session_v1";
+
+    let currentUser = null;
 
     // Trabajamos con una copia "viva" que mezcla BASE + OVERRIDES - ELIMINADAS
     let PATHOLOGIES = {};
@@ -1317,46 +1341,56 @@
     let adminEditingKey = null;
 
     function isAdminLogged(){
-      try{
-        return localStorage.getItem(STORAGE_KEY_ADMIN) === "1";
-      }catch(e){
-        return false;
+      return currentUser && currentUser.role === "admin";
+    }
+
+    function checkAuth(){
+      const session = localStorage.getItem(AUTH_SESSION_KEY);
+      if(session){
+        try {
+          const data = JSON.parse(session);
+          if(data && data.user){
+            currentUser = data;
+            applyAuthUI();
+            return true;
+          }
+        } catch(e) {}
+      }
+      window.location.href = "login.html";
+      return false;
+    }
+
+    function handleLogout(){
+      localStorage.removeItem(AUTH_SESSION_KEY);
+      currentUser = null;
+      window.location.href = "login.html";
+    }
+
+    function applyAuthUI(){
+      document.getElementById("btnLogout").style.display = "block";
+      const btnAdmin = document.getElementById("btnOpenAdmin");
+      if(currentUser && currentUser.role === "admin"){
+        btnAdmin.style.display = "block";
+      } else {
+        btnAdmin.style.display = "none";
       }
     }
 
-    function setAdminLogged(val){
-      try{
-        localStorage.setItem(STORAGE_KEY_ADMIN, val ? "1" : "0");
-      }catch(e){}
-    }
-
     function openAdmin(){
-      adminModal.classList.add("open");
-      adminModal.setAttribute("aria-hidden","false");
-
-      adminLoginHint.style.display = "none";
-      adminCrudHint.style.display = "none";
-
       if (isAdminLogged()){
+        adminModal.classList.add("open");
+        adminModal.setAttribute("aria-hidden","false");
+        adminCrudHint.style.display = "none";
         showAdminPanel();
-      }else{
-        showAdminLogin();
+      } else {
+        alert("Acceso denegado. Se requieren permisos de administrador.");
       }
     }
 
     function closeAdmin(){
       adminModal.classList.remove("open");
       adminModal.setAttribute("aria-hidden","true");
-      adminPass.value = "";
-      adminLoginHint.style.display = "none";
       adminCrudHint.style.display = "none";
-    }
-
-    function showAdminLogin(){
-      adminLoginBox.style.display = "block";
-      adminPanelBox.style.display = "none";
-      adminPass.value = "";
-      adminPass.focus();
     }
 
     function showAdminPanel(){
@@ -1776,6 +1810,7 @@
       mergeBaseAndOverrides();
       buildIndex();
       clearResults();
+      checkAuth();
     }
 
     // =========================================================
@@ -1826,27 +1861,8 @@
       closeAdmin();
     });
 
-    btnAdminLogin.addEventListener("click", function(){
-      const pass = safeVal(adminPass.value);
-      if (pass === ADMIN_PASSWORD){
-        setAdminLogged(true);
-        adminLoginHint.style.display = "none";
-        showAdminPanel();
-      }else{
-        showLoginHint("Contraseña incorrecta.");
-      }
-    });
-
-    adminPass.addEventListener("keydown", function(e){
-      if (e.key === "Enter"){
-        e.preventDefault();
-        btnAdminLogin.click();
-      }
-    });
-
     btnAdminLogout.addEventListener("click", function(){
-      setAdminLogged(false);
-      showAdminLogin();
+      handleLogout();
     });
 
     btnAdminClearForm.addEventListener("click", function(){
