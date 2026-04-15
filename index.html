@@ -785,6 +785,26 @@
             </div>
             <div class="adminList" id="adminList"></div>
           </div>
+
+          <div style="grid-column: 1 / -1; height: 1px; background: rgba(226,232,240,.9); margin: 4px 0 8px;"></div>
+
+          <div class="adminListWrap" style="grid-column: 1 / -1;">
+            <div class="adminListHeader">
+              <div class="adminListTitle">Registro de búsquedas</div>
+              <div class="adminListTools" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                <input id="logFilter" type="text" placeholder="Filtrar por usuario o texto..." autocomplete="off" />
+                <select id="logUserFilter"><option value="">Todos los usuarios</option></select>
+                <select id="logSort">
+                  <option value="desc">Más recientes primero</option>
+                  <option value="asc">Más antiguas primero</option>
+                </select>
+                <button class="btn2" id="btnExportLogs" type="button">Exportar CSV</button>
+                <button class="btn2" id="btnClearLogs" type="button">Vaciar logs</button>
+              </div>
+            </div>
+            <div class="adminList" id="logList" style="max-height:320px; overflow:auto;"></div>
+            <div class="adminHint" id="logHint" style="display:none; margin-top:8px;"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -989,8 +1009,45 @@
     const STORAGE_KEY_DATA_V3 = "diblafe_pathologies_overrides_v3";
     const STORAGE_KEY_DATA_V4 = "diblafe_pathologies_overrides_v4";
     const AUTH_SESSION_KEY = "diblafe_auth_session_v1";
+    const SEARCH_LOG_KEY = "diblafe_search_logs_v1";
+    const SEARCH_LOG_MAX = 2000;
 
     let currentUser = null;
+    let lastLogSig = { user: null, q: null, ts: 0 };
+
+    function loadSearchLogs(){
+      try{
+        const raw = localStorage.getItem(SEARCH_LOG_KEY);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr : [];
+      }catch(e){ return []; }
+    }
+
+    function saveSearchLogs(arr){
+      try{ localStorage.setItem(SEARCH_LOG_KEY, JSON.stringify(arr)); }catch(e){}
+    }
+
+    function logSearch(query, resultsCount){
+      const q = (query || "").trim();
+      if (!q) return;
+      const user = (currentUser && currentUser.user) ? currentUser.user : "anon";
+      const now = Date.now();
+      // Dedup: misma query del mismo usuario en <1500ms (evita ruido del debounce por tecla)
+      if (lastLogSig.user === user && lastLogSig.q === q && (now - lastLogSig.ts) < 1500){
+        lastLogSig.ts = now;
+        return;
+      }
+      lastLogSig = { user: user, q: q, ts: now };
+      const logs = loadSearchLogs();
+      logs.push({ u: user, q: q, r: resultsCount|0, t: now });
+      if (logs.length > SEARCH_LOG_MAX) logs.splice(0, logs.length - SEARCH_LOG_MAX);
+      saveSearchLogs(logs);
+    }
+
+    function clearSearchLogs(){
+      saveSearchLogs([]);
+    }
 
     // Trabajamos con una copia "viva" que mezcla BASE + OVERRIDES - ELIMINADAS
     let PATHOLOGIES = {};
@@ -1247,6 +1304,7 @@
 
       if (!allMatches.length){
         elNoResults.style.display = "block";
+        logSearch(q, 0);
         return;
       }
 
@@ -1305,6 +1363,8 @@
         card.appendChild(grid);
         elResults.appendChild(card);
       });
+
+      logSearch(q, unique.length);
     }
 
     // =========================================================
@@ -1399,6 +1459,7 @@
       fillCompanySelect();
       resetAdminForm();
       renderAdminList();
+      renderLogs();
     }
 
     function fillCompanySelect(){
@@ -1883,6 +1944,117 @@
     adminFilter.addEventListener("input", debounce(function(){
       renderAdminList();
     }, 120));
+
+    // =========================================================
+    // LOGS DE BÚSQUEDA (solo admin)
+    // =========================================================
+    const logList = document.getElementById("logList");
+    const logFilter = document.getElementById("logFilter");
+    const logUserFilter = document.getElementById("logUserFilter");
+    const logSort = document.getElementById("logSort");
+    const logHint = document.getElementById("logHint");
+
+    function formatLogDate(ts){
+      try{
+        const d = new Date(ts);
+        const pad = function(n){ return n < 10 ? "0"+n : ""+n; };
+        return pad(d.getDate())+"/"+pad(d.getMonth()+1)+"/"+d.getFullYear()+" "+
+               pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds());
+      }catch(e){ return String(ts); }
+    }
+
+    function escapeHTML(s){
+      return String(s == null ? "" : s)
+        .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+    }
+
+    function refreshLogUserOptions(logs){
+      const users = Array.from(new Set(logs.map(function(l){ return l.u || "anon"; }))).sort();
+      const prev = logUserFilter.value;
+      logUserFilter.innerHTML = '<option value="">Todos los usuarios</option>' +
+        users.map(function(u){ return '<option value="'+escapeHTML(u)+'">'+escapeHTML(u)+'</option>'; }).join("");
+      if (users.indexOf(prev) !== -1) logUserFilter.value = prev;
+    }
+
+    function renderLogs(){
+      if (!isAdminLogged()){ logList.innerHTML = ""; return; }
+      const all = loadSearchLogs();
+      refreshLogUserOptions(all);
+
+      const fText = normalizeText(logFilter.value || "");
+      const fUser = logUserFilter.value || "";
+      const sort = logSort.value === "asc" ? 1 : -1;
+
+      let rows = all.slice();
+      if (fUser) rows = rows.filter(function(l){ return (l.u||"anon") === fUser; });
+      if (fText) rows = rows.filter(function(l){
+        return normalizeText(l.q).includes(fText) || normalizeText(l.u||"").includes(fText);
+      });
+      rows.sort(function(a,b){ return sort * (a.t - b.t); });
+
+      logHint.style.display = "block";
+      logHint.className = "adminHint";
+      logHint.textContent = "Mostrando "+rows.length+" de "+all.length+" registros.";
+
+      if (!rows.length){
+        logList.innerHTML = '<div style="padding:12px; color:var(--muted); font-size:13px;">Sin registros.</div>';
+        return;
+      }
+
+      const header =
+        '<div style="display:grid; grid-template-columns: 170px 120px 1fr 80px; gap:8px; padding:8px 10px; '+
+        'font-size:12px; font-weight:900; color:var(--brand); border-bottom:1px solid var(--line); '+
+        'background:#f8fafc; position:sticky; top:0;">'+
+          '<div>Fecha</div><div>Usuario</div><div>Búsqueda</div><div style="text-align:right;">Result.</div>'+
+        '</div>';
+
+      const body = rows.map(function(l){
+        return '<div style="display:grid; grid-template-columns: 170px 120px 1fr 80px; gap:8px; '+
+               'padding:8px 10px; font-size:13px; border-bottom:1px solid var(--line);">'+
+               '<div>'+escapeHTML(formatLogDate(l.t))+'</div>'+
+               '<div><strong>'+escapeHTML(l.u||"anon")+'</strong></div>'+
+               '<div>'+escapeHTML(l.q)+'</div>'+
+               '<div style="text-align:right;">'+(l.r|0)+'</div>'+
+               '</div>';
+      }).join("");
+
+      logList.innerHTML = header + body;
+    }
+
+    logFilter.addEventListener("input", debounce(renderLogs, 150));
+    logUserFilter.addEventListener("change", renderLogs);
+    logSort.addEventListener("change", renderLogs);
+
+    document.getElementById("btnClearLogs").addEventListener("click", function(){
+      if (!isAdminLogged()) return;
+      if (confirm("¿Vaciar todos los registros de búsqueda? Esta acción no se puede deshacer.")){
+        clearSearchLogs();
+        renderLogs();
+      }
+    });
+
+    document.getElementById("btnExportLogs").addEventListener("click", function(){
+      if (!isAdminLogged()) return;
+      const all = loadSearchLogs().slice().sort(function(a,b){ return b.t - a.t; });
+      const esc = function(v){
+        const s = String(v == null ? "" : v).replace(/"/g,'""');
+        return '"'+s+'"';
+      };
+      const lines = ["Fecha,Usuario,Busqueda,Resultados"];
+      all.forEach(function(l){
+        lines.push([esc(formatLogDate(l.t)), esc(l.u||"anon"), esc(l.q), (l.r|0)].join(","));
+      });
+      const blob = new Blob(["\ufeff"+lines.join("\n")], { type:"text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "diblafe-logs-busqueda.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
 
     // Añadir compañía
     btnAddCompany.addEventListener("click", function(){
