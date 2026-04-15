@@ -1033,13 +1033,30 @@
       if (!q) return;
       const user = (currentUser && currentUser.user) ? currentUser.user : "anon";
       const now = Date.now();
-      // Dedup: misma query del mismo usuario en <1500ms (evita ruido del debounce por tecla)
+      const nq = normalizeText(q);
+      const logs = loadSearchLogs();
+      const last = logs.length ? logs[logs.length - 1] : null;
+
+      // Fusión: si el último log del mismo usuario es prefijo del actual (o al revés)
+      // y está dentro de una ventana de 8s, reemplazamos en vez de añadir.
+      // Así, escribir "hiperte" + "hipertens" + "hipertension" deja UNA sola entrada final.
+      if (last && last.u === user && (now - last.t) < 8000){
+        const nlast = normalizeText(last.q);
+        if (nlast && (nq.indexOf(nlast) === 0 || nlast.indexOf(nq) === 0)){
+          last.q = q;
+          last.r = resultsCount|0;
+          last.t = now;
+          saveSearchLogs(logs);
+          lastLogSig = { user: user, q: q, ts: now };
+          return;
+        }
+      }
+
       if (lastLogSig.user === user && lastLogSig.q === q && (now - lastLogSig.ts) < 1500){
         lastLogSig.ts = now;
         return;
       }
       lastLogSig = { user: user, q: q, ts: now };
-      const logs = loadSearchLogs();
       logs.push({ u: user, q: q, r: resultsCount|0, t: now });
       if (logs.length > SEARCH_LOG_MAX) logs.splice(0, logs.length - SEARCH_LOG_MAX);
       saveSearchLogs(logs);
